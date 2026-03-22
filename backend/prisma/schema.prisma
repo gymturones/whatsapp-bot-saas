@@ -1,0 +1,283 @@
+// prisma/schema.prisma
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// ============================================================================
+// AUTH & USERS
+// ============================================================================
+
+model User {
+  id                String    @id @default(cuid())
+  email             String    @unique
+  name              String
+  password_hash     String?
+  phone             String?
+  company_name      String?
+  avatar_url        String?
+  
+  // Subscription info
+  subscription_plan String    @default("free") // free, starter, pro
+  subscription_status String  @default("inactive") // inactive, active, cancelled
+  subscription_id   String?   @unique
+  stripe_customer_id String?  @unique
+  
+  // Billing
+  monthly_cost      Float     @default(0)
+  billing_cycle_start DateTime?
+  billing_cycle_end   DateTime?
+  
+  // Account
+  is_active         Boolean   @default(true)
+  email_verified    Boolean   @default(false)
+  created_at        DateTime  @default(now())
+  updated_at        DateTime  @updatedAt
+  
+  // Relations
+  bots              Bot[]
+  conversations     Conversation[]
+  api_keys          ApiKey[]
+  payments          Payment[]
+  
+  @@index([email])
+  @@index([subscription_plan])
+}
+
+model ApiKey {
+  id                String    @id @default(cuid())
+  user_id           String
+  user              User      @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  
+  key               String    @unique
+  name              String
+  is_active         Boolean   @default(true)
+  
+  last_used_at      DateTime?
+  created_at        DateTime  @default(now())
+  expires_at        DateTime?
+  
+  @@index([user_id])
+  @@index([key])
+}
+
+// ============================================================================
+// BOTS
+// ============================================================================
+
+model Bot {
+  id                String    @id @default(cuid())
+  user_id           String
+  user              User      @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  
+  name              String
+  description       String?
+  whatsapp_phone    String    // Ej: 54XXXXXXXXXXXX (Argentina format)
+  whatsapp_api_token String   // Token de WhatsApp Business API
+  
+  // Configuration
+  is_active         Boolean   @default(true)
+  auto_reply_enabled Boolean @default(true)
+  auto_reply_message String?
+  
+  // Responses configuration
+  greeting_message  String?   @default("Hola! 👋 ¿En qué puedo ayudarte?")
+  fallback_message  String?   @default("Lo siento, no entendí. ¿Podrías reformular tu pregunta?")
+  
+  // AI Configuration
+  ai_model          String    @default("gpt-3.5-turbo") // gpt-3.5-turbo, gpt-4
+  ai_temperature    Float     @default(0.7)
+  ai_instructions   String?   @db.Text
+  
+  // Stats
+  total_messages    Int       @default(0)
+  total_conversations Int     @default(0)
+  
+  created_at        DateTime  @default(now())
+  updated_at        DateTime  @updatedAt
+  
+  // Relations
+  conversations     Conversation[]
+  messages          Message[]
+  responses         BotResponse[]
+  
+  @@index([user_id])
+  @@index([whatsapp_phone])
+}
+
+model BotResponse {
+  id                String    @id @default(cuid())
+  bot_id            String
+  bot               Bot       @relation(fields: [bot_id], references: [id], onDelete: Cascade)
+  
+  trigger           String    // Palabra clave o patrón
+  response          String    // Respuesta automática
+  is_active         Boolean   @default(true)
+  
+  // Tipo de trigger
+  trigger_type      String    @default("keyword") // keyword, regex, contains
+  
+  created_at        DateTime  @default(now())
+  updated_at        DateTime  @updatedAt
+  
+  @@index([bot_id])
+  @@unique([bot_id, trigger])
+}
+
+// ============================================================================
+// CONVERSATIONS & MESSAGES
+// ============================================================================
+
+model Conversation {
+  id                String    @id @default(cuid())
+  user_id           String
+  user              User      @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  
+  bot_id            String
+  bot               Bot       @relation(fields: [bot_id], references: [id], onDelete: Cascade)
+  
+  whatsapp_contact  String    // Phone number del contacto
+  contact_name      String?   // Nombre del contacto si está disponible
+  
+  status            String    @default("active") // active, archived, closed
+  
+  message_count     Int       @default(0)
+  last_message_at   DateTime?
+  
+  created_at        DateTime  @default(now())
+  updated_at        DateTime  @updatedAt
+  
+  // Relations
+  messages          Message[]
+  
+  @@index([user_id])
+  @@index([bot_id])
+  @@index([whatsapp_contact])
+  @@unique([bot_id, whatsapp_contact])
+}
+
+model Message {
+  id                String    @id @default(cuid())
+  conversation_id   String
+  conversation      Conversation @relation(fields: [conversation_id], references: [id], onDelete: Cascade)
+  
+  bot_id            String
+  bot               Bot       @relation(fields: [bot_id], references: [id], onDelete: Cascade)
+  
+  direction         String    // incoming, outgoing
+  content           String    @db.Text
+  
+  // Metadata
+  whatsapp_message_id String? @unique
+  sender_phone      String
+  
+  // Processing
+  processed         Boolean   @default(false)
+  ai_generated      Boolean   @default(false)
+  response_time_ms  Int?
+  
+  created_at        DateTime  @default(now())
+  
+  @@index([conversation_id])
+  @@index([bot_id])
+  @@index([created_at])
+}
+
+// ============================================================================
+// PAYMENTS & SUBSCRIPTIONS
+// ============================================================================
+
+model Payment {
+  id                String    @id @default(cuid())
+  user_id           String
+  user              User      @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  
+  amount            Float
+  currency          String    @default("ARS")
+  status            String    // pending, completed, failed, refunded
+  
+  // Payment method
+  payment_method    String    // stripe, mercado_pago
+  payment_id        String    @unique // Transaction ID from provider
+  
+  // Invoice info
+  invoice_url       String?
+  receipt_url       String?
+  
+  // Billing period
+  billing_period_start DateTime
+  billing_period_end   DateTime
+  
+  created_at        DateTime  @default(now())
+  updated_at        DateTime  @updatedAt
+  
+  @@index([user_id])
+  @@index([status])
+  @@index([created_at])
+}
+
+model Subscription {
+  id                String    @id @default(cuid())
+  plan_id           String    // starter, pro, business
+  plan_name         String
+  
+  price             Float     // Precio mensual
+  currency          String    @default("ARS")
+  
+  // Features
+  features          String[]  // Array de features incluidas
+  max_bots          Int
+  max_messages_per_month Int
+  ai_enabled        Boolean   @default(false)
+  
+  is_active         Boolean   @default(true)
+  created_at        DateTime  @default(now())
+  
+  @@unique([plan_id])
+}
+
+// ============================================================================
+// WEBHOOKS & AUDIT
+// ============================================================================
+
+model WebhookEvent {
+  id                String    @id @default(cuid())
+  bot_id            String
+  
+  event_type        String    // message_received, message_sent, etc
+  payload           String    @db.Text
+  
+  processed         Boolean   @default(false)
+  error_message     String?
+  
+  retry_count       Int       @default(0)
+  
+  created_at        DateTime  @default(now())
+  processed_at      DateTime?
+  
+  @@index([bot_id])
+  @@index([event_type])
+}
+
+model AuditLog {
+  id                String    @id @default(cuid())
+  user_id           String
+  
+  action            String    // bot_created, bot_updated, message_sent, etc
+  resource_type     String    // Bot, Message, User, etc
+  resource_id       String
+  
+  changes           String?   @db.Text // JSON con cambios
+  ip_address        String?
+  user_agent        String?
+  
+  created_at        DateTime  @default(now())
+  
+  @@index([user_id])
+  @@index([action])
+}
