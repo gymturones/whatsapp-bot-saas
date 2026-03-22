@@ -286,3 +286,15 @@ export async function testWebhookConnection() {
     };
   }
 }
+
+// Send message (generic function that routes to appropriate handler)
+export async function sendMessage(recipientPhone: string, message: string) {
+  try {
+    // TODO: This is a stub that calls sendWhatsAppMessage
+    // In production, this should route to the appropriate handler based on message type
+    return await sendWhatsAppMessage(recipientPhone, message);
+  } catch (error) {
+    console.error("Send message error:", error);
+    throw new Error("Failed to send message");
+  }
+}

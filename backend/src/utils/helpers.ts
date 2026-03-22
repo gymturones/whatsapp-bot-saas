@@ -1,5 +1,6 @@
 import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
+import type { NextApiResponse } from 'next';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
 const JWT_EXPIRES_IN = '7d';
@@ -205,4 +206,14 @@ export function getEnv(key: string, defaultValue?: string): string {
     throw new Error(`Environment variable ${key} is required`);
   }
   return value || defaultValue || '';
+}
+
+// API Response helpers
+export function sendSuccess(res: NextApiResponse, data: unknown, statusCode = 200): void {
+  res.status(statusCode).json({ success: true, data })
+}
+
+export function sendError(res: NextApiResponse, error: Error | string, statusCode = 400): void {
+  const message = error instanceof Error ? error.message : String(error)
+  res.status(statusCode).json({ success: false, error: message })
 }

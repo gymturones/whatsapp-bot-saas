@@ -3,9 +3,8 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import { getCurrentUser } from "@/lib/supabase";
 import { createStripeCustomer, createSubscription, SUBSCRIPTION_PLANS } from "@/lib/stripe";
-import { PrismaClient } from "@prisma/client";
+import { prisma } from "@/lib/prisma";
 
-const prisma = new PrismaClient();
 const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 
 export default async function handler(

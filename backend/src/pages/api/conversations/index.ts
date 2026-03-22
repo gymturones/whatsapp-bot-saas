@@ -1,6 +1,6 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import { withMiddleware } from '@/middleware/auth';
-import { prisma } from '@/lib/supabase';
+import { prisma } from '@/lib/prisma';
 import { sendError, sendSuccess, calculateOffset, getPaginationParams } from '@/utils/helpers';
 
 // GET /api/conversations?botId=...

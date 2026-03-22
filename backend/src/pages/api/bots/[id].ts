@@ -1,7 +1,7 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import { withMiddleware } from '@/middleware/auth';
 import { UpdateBotSchema } from '@/validators/schemas';
-import { prisma } from '@/lib/supabase';
+import { prisma } from '@/lib/prisma';
 import { sendError, sendSuccess } from '@/utils/helpers';
 
 async function handler(

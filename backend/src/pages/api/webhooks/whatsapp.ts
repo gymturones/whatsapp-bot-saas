@@ -1,15 +1,13 @@
 // src/pages/api/webhooks/whatsapp.ts
 
 import type { NextApiRequest, NextApiResponse } from "next";
-import { PrismaClient } from "@prisma/client";
+import { prisma } from "@/lib/prisma";
 import {
   verifyWebhookToken,
   parseWebhookPayload,
   markMessageAsRead,
   sendWhatsAppMessage,
 } from "@/lib/whatsapp";
-
-const prisma = new PrismaClient();
 
 export default async function handler(
   req: NextApiRequest,

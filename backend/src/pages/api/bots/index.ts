@@ -1,10 +1,8 @@
 // src/pages/api/bots/index.ts
 
 import type { NextApiRequest, NextApiResponse } from "next";
-import { PrismaClient } from "@prisma/client";
 import { getCurrentUser } from "@/lib/supabase";
-
-const prisma = new PrismaClient();
+import { prisma } from "@/lib/prisma";
 
 export default async function handler(
   req: NextApiRequest,

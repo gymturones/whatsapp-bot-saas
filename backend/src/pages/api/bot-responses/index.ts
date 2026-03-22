@@ -4,7 +4,7 @@ import {
   CreateBotResponseSchema,
   UpdateBotResponseSchema,
 } from '@/validators/schemas';
-import { prisma } from '@/lib/supabase';
+import { prisma } from '@/lib/prisma';
 import { sendError, sendSuccess } from '@/utils/helpers';
 
 // GET /api/bot-responses?botId=...
