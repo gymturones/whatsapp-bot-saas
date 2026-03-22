@@ -1,7 +1,7 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import jwt from 'jsonwebtoken';
+import { getSupabaseServerClient } from '@/lib/supabase';
 
-// Tipo de usuario autenticado
 interface AuthUser {
   userId: string;
 }
@@ -15,7 +15,6 @@ declare global {
   }
 }
 
-// Tipos de respuesta
 export interface ApiResponse<T = any> {
   success: boolean;
   data?: T;
@@ -23,7 +22,6 @@ export interface ApiResponse<T = any> {
   status: number;
 }
 
-// Middleware para verificar autenticación
 export async function requireAuth(
   req: NextApiRequest,
   res: NextApiResponse
@@ -36,19 +34,25 @@ export async function requireAuth(
   }
 
   try {
+    const supabase = getSupabaseServerClient();
+    const { data: { user }, error } = await supabase.auth.getUser(token);
+    
+    if (!error && user) {
+      return user.id;
+    }
+
     const decoded = jwt.verify(token, process.env.JWT_SECRET || 'secret');
     if (typeof decoded === 'object' && 'userId' in decoded) {
       return decoded.userId as string;
     }
   } catch (error) {
-    res.status(401).json({ error: 'Token inválido' });
+    res.status(401).json({ error: 'Token invalido o expirado' });
     return null;
   }
 
   return null;
 }
 
-// Wrapper para rutas protegidas
 export function withAuth(
   handler: (
     req: NextApiRequest,
@@ -71,14 +75,13 @@ export function withAuth(
   };
 }
 
-// Verificar método HTTP
 export function withMethod(
   handler: (req: NextApiRequest, res: NextApiResponse) => Promise<void> | void,
   methods: string[]
 ) {
   return async (req: NextApiRequest, res: NextApiResponse) => {
     if (!req.method || !methods.includes(req.method)) {
-      res.status(405).json({ error: 'Método no permitido' });
+      res.status(405).json({ error: 'Metodo no permitido' });
       return;
     }
 
@@ -93,7 +96,6 @@ export function withMethod(
   };
 }
 
-// Validar input con Zod
 export function withValidation<T>(
   schema: any,
   handler: (
@@ -108,14 +110,13 @@ export function withValidation<T>(
       await handler(req, res, validated);
     } catch (error: any) {
       res.status(400).json({
-        error: error.errors?.[0]?.message || 'Validación fallida',
+        error: error.errors?.[0]?.message || 'Validacion fallida',
         issues: error.errors,
       });
     }
   };
 }
 
-// Combinar middlewares
 export function withMiddleware(
   handler: (
     req: NextApiRequest,
@@ -129,27 +130,24 @@ export function withMiddleware(
   } = {}
 ) {
   return async (req: NextApiRequest, res: NextApiResponse) => {
-    // Check method
     if (options.methods && req.method && !options.methods.includes(req.method)) {
-      res.status(405).json({ error: 'Método no permitido' });
+      res.status(405).json({ error: 'Metodo no permitido' });
       return;
     }
 
-    // Check auth
     let userId: string | null = null;
     if (options.auth) {
       userId = await requireAuth(req, res);
       if (!userId) return;
     }
 
-    // Validate input
     if (options.validation) {
       try {
         const validated = options.validation.parse(req.body);
         req.body = validated;
       } catch (error: any) {
         res.status(400).json({
-          error: error.errors?.[0]?.message || 'Validación fallida',
+          error: error.errors?.[0]?.message || 'Validacion fallida',
         });
         return;
       }
@@ -166,7 +164,6 @@ export function withMiddleware(
   };
 }
 
-// Error handler
 export function sendError(res: NextApiResponse, error: any, status: number = 500) {
   console.error('API Error:', error);
   res.status(status).json({
@@ -174,7 +171,6 @@ export function sendError(res: NextApiResponse, error: any, status: number = 500
   });
 }
 
-// Success handler
 export function sendSuccess<T>(
   res: NextApiResponse,
   data: T,

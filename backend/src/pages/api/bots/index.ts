@@ -1,14 +1,22 @@
 // src/pages/api/bots/index.ts
 
 import type { NextApiRequest, NextApiResponse } from "next";
-import { getCurrentUser } from "@/lib/supabase";
+import { getSupabaseServerClient } from "@/lib/supabase";
 import { prisma } from "@/lib/prisma";
 
 export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse
 ) {
-  const user = await getCurrentUser();
+  const token = req.headers.authorization?.replace('Bearer ', '');
+  
+  if (!token) {
+    res.status(401).json({ error: "Unauthorized" });
+    return;
+  }
+
+  const supabase = getSupabaseServerClient();
+  const { data: { user } } = await supabase.auth.getUser(token);
 
   if (!user) {
     res.status(401).json({ error: "Unauthorized" });

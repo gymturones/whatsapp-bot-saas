@@ -11,7 +11,17 @@ export function useFetch<T>(url: string, options?: RequestInit) {
     const fetchData = async () => {
       try {
         setLoading(true);
-        const response = await fetch(url, options);
+        const token = localStorage.getItem('token');
+        
+        const headers = {
+          ...options?.headers,
+          ...(token && { Authorization: `Bearer ${token}` }),
+        };
+
+        const response = await fetch(url, {
+          ...options,
+          headers,
+        });
         if (!response.ok) throw new Error(`Error ${response.status}`);
         const json = await response.json();
         setData(json.data || json);
@@ -94,9 +104,26 @@ export function useAuth() {
           return;
         }
 
-        // Opcional: verificar token con el servidor
-        setUser({ token });
+        // Verify token with the server by calling /api/auth/me
+        const response = await fetch('/api/auth/me', {
+          method: 'GET',
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        if (!response.ok) {
+          // Token is invalid or expired
+          localStorage.removeItem('token');
+          router.push('/auth/login');
+          return;
+        }
+
+        const data = await response.json();
+        setUser(data.user);
       } catch (error) {
+        console.error('Auth check error:', error);
+        localStorage.removeItem('token');
         router.push('/auth/login');
       } finally {
         setLoading(false);

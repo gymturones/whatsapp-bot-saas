@@ -14,7 +14,7 @@ export default function DashboardPage() {
 
   // Fetch bots
   const { data: botsData, loading: botsLoading } = useFetch(
-    '/api/bots?page=1&limit=12'
+    '/api/bots/list?page=1&limit=12'
   );
 
   // Delete bot

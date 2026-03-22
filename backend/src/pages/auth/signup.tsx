@@ -50,13 +50,15 @@ const Signup: NextPage = () => {
         return
       }
 
-      // Show success message
-      setError('') // Clear to show success
-      
-      // Redirect after a moment
-      setTimeout(() => {
+      // Save token to localStorage (same as login.tsx)
+      if (data?.session) {
+        localStorage.setItem('token', data.session.access_token)
+        // Redirect to dashboard
+        router.push('/dashboard')
+      } else {
+        // If no session, redirect to login
         router.push('/auth/login')
-      }, 2000)
+      }
     } catch (err: any) {
       setError(err.message || 'Error registering')
     } finally {
