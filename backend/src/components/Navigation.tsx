@@ -70,7 +70,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen = true, onClose }) => {
 
   const navItems: NavItem[] = [
     { label: 'Dashboard', href: '/dashboard', icon: '📊' },
-    { label: 'Mis Bots', href: '/dashboard/bots', icon: '🤖' },
+    { label: 'Mis Bots', href: '/dashboard', icon: '🤖' },
     { label: 'Conversaciones', href: '/dashboard/conversations', icon: '💬' },
     { label: 'Configuración', href: '/dashboard/settings', icon: '⚙️' },
     { label: 'Precios', href: '/pricing', icon: '💰' },

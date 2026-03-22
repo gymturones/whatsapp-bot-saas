@@ -18,7 +18,7 @@ export default function BotFormPage() {
     {
       method: isEdit ? 'PUT' : 'POST',
       onSuccess: () => {
-        router.push('/dashboard/bots');
+        router.push('/dashboard');
       },
     }
   );
@@ -135,7 +135,7 @@ export default function BotFormPage() {
             <Button
               type="button"
               variant="secondary"
-              onClick={() => router.push('/dashboard/bots')}
+              onClick={() => router.push('/dashboard')}
             >
               Cancelar
             </Button>

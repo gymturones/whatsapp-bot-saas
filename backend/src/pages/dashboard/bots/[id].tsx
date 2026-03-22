@@ -77,7 +77,7 @@ export default function BotDetailsPage() {
         </div>
         <Button
           variant="secondary"
-          onClick={() => router.push('/dashboard/bots')}
+          onClick={() => router.push('/dashboard')}
         >
           ← Volver
         </Button>
