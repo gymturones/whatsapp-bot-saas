@@ -50,15 +50,11 @@ const Home: NextPage = () => {
           </div>
 
           <div className="flex items-center space-x-4">
-            <Link href="/auth/login">
-              <a className="text-gray-600 hover:text-gray-900 font-medium">
-                Sign In
-              </a>
+            <Link href="/auth/login" className="text-gray-600 hover:text-gray-900 font-medium">
+              Sign In
             </Link>
-            <Link href="/auth/signup">
-              <a className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition">
-                Get Started
-              </a>
+            <Link href="/auth/signup" className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition">
+              Get Started
             </Link>
           </div>
         </nav>
@@ -77,10 +73,8 @@ const Home: NextPage = () => {
           </p>
 
           <div className="flex flex-col sm:flex-row justify-center gap-4 mb-16">
-            <Link href="/auth/signup">
-              <a className="bg-blue-600 text-white px-8 py-3 rounded-lg hover:bg-blue-700 transition font-medium text-lg">
-                Comenzar gratis →
-              </a>
+            <Link href="/auth/signup" className="bg-blue-600 text-white px-8 py-3 rounded-lg hover:bg-blue-700 transition font-medium text-lg">
+              Comenzar gratis →
             </Link>
             <button className="border-2 border-gray-300 text-gray-900 px-8 py-3 rounded-lg hover:border-gray-400 transition font-medium text-lg">
               Ver demo

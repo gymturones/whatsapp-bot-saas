@@ -2,12 +2,17 @@ import { useState, useCallback, useEffect } from 'react';
 import { useRouter } from 'next/router';
 
 // Fetch Hook
-export function useFetch<T>(url: string, options?: RequestInit) {
+export function useFetch<T>(url: string | null, options?: RequestInit) {
   const [data, setData] = useState<T | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    if (!url) {
+      setLoading(false);
+      setData(null);
+      return;
+    }
     const fetchData = async () => {
       try {
         setLoading(true);
