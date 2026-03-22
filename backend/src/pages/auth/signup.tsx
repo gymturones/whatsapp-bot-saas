@@ -35,7 +35,7 @@ const Signup: NextPage = () => {
     try {
       const supabase = getSupabaseBrowserClient()
 
-      const { error: authError } = await supabase.auth.signUp({
+      const { data, error: authError } = await supabase.auth.signUp({
         email,
         password,
         options: {
