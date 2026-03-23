@@ -3,11 +3,22 @@
 import type { NextPage } from 'next'
 import Head from 'next/head'
 import Link from 'next/link'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { useRouter } from 'next/router'
 
 const Home: NextPage = () => {
+  const router = useRouter()
   const [email, setEmail] = useState('')
   const [submitted, setSubmitted] = useState(false)
+
+  useEffect(() => {
+    // If the URL has a Supabase recovery token, redirect to reset-password page
+    const hash = window.location.hash.substring(1)
+    const params = new URLSearchParams(hash)
+    if (params.get('type') === 'recovery' && params.get('access_token')) {
+      router.replace('/auth/reset-password' + window.location.hash)
+    }
+  }, [])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
