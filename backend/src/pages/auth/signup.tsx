@@ -46,7 +46,19 @@ const Signup: NextPage = () => {
       })
 
       if (authError) {
-        setError(authError.message)
+        // Map Supabase errors to user-friendly messages
+        const msg = authError.message?.toLowerCase() || ''
+        if (msg.includes('rate limit') || msg.includes('email rate') || (authError as any).status === 429) {
+          setError('Demasiados intentos. Esperá unos minutos e intentá de nuevo.')
+        } else if (msg.includes('already registered') || msg.includes('user already exists')) {
+          setError('Este email ya está registrado. ¿Querés iniciar sesión?')
+        } else if (msg.includes('invalid email') || msg.includes('email address is invalid')) {
+          setError('El email ingresado no es válido.')
+        } else if (msg.includes('password') && msg.includes('short')) {
+          setError('La contraseña es demasiado corta.')
+        } else {
+          setError('No se pudo crear la cuenta. Intentá de nuevo más tarde.')
+        }
         return
       }
 
@@ -84,18 +96,8 @@ const Signup: NextPage = () => {
           {/* Form */}
           <div className="bg-white rounded-lg shadow-lg p-8">
             {error && (
-              <div className={`mb-4 p-4 rounded-lg ${
-                error.includes('contraseña') || error.includes('coinciden') || error.includes('caracteres')
-                  ? 'bg-red-50 border border-red-200'
-                  : 'bg-green-50 border border-green-200'
-              }`}>
-                <p className={`text-sm ${
-                  error.includes('contraseña') || error.includes('coinciden') || error.includes('caracteres')
-                    ? 'text-red-700'
-                    : 'text-green-700'
-                }`}>
-                  {error}
-                </p>
+              <div className="mb-4 p-4 rounded-lg bg-red-50 border border-red-200">
+                <p className="text-sm text-red-700">{error}</p>
               </div>
             )}
 
