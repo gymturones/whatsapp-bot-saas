@@ -36,13 +36,12 @@ const Signup: NextPage = () => {
     try {
       const supabase = getSupabaseBrowserClient()
 
-      const { error: authError } = await supabase.auth.signUp({
+      const { data, error: authError } = await supabase.auth.signUp({
         email,
         password,
         options: {
-          data: {
-            name,
-          },
+          data: { name },
+          emailRedirectTo: `${window.location.origin}/auth/callback`,
         },
       })
 
@@ -51,10 +50,17 @@ const Signup: NextPage = () => {
         return
       }
 
-      setSuccess('¡Cuenta creada! Revisá tu email para confirmar. Redirigiendo al login...')
+      // Si la sesión ya existe, el usuario está confirmado automáticamente (Supabase sin confirmación de email)
+      if (data.session) {
+        localStorage.setItem('sb_access_token', data.session.access_token)
+        router.push('/dashboard')
+        return
+      }
+
+      setSuccess('¡Cuenta creada! Podés iniciar sesión ahora.')
       setTimeout(() => {
         router.push('/auth/login')
-      }, 3000)
+      }, 2000)
     } catch (err: any) {
       setError(err.message || 'Error registering')
     } finally {

@@ -1,13 +1,36 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import { useForm, useMutation } from '@/hooks';
 import { Card, Button, Input, Alert, Spinner } from '@/components/UI';
+import { getSupabaseBrowserClient } from '@/lib/supabase';
 
 export default function SettingsPage() {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState('profile');
   const [showApiKey, setShowApiKey] = useState(false);
   const [apiKey, setApiKey] = useState('');
+  const [userEmail, setUserEmail] = useState('');
+  const [userName, setUserName] = useState('');
+  const [userCompany, setUserCompany] = useState('');
+  const [loadingUser, setLoadingUser] = useState(true);
+
+  // Cargar datos reales del usuario desde Supabase session
+  useEffect(() => {
+    const loadUser = async () => {
+      try {
+        const supabase = getSupabaseBrowserClient();
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session?.user) {
+          setUserEmail(session.user.email || '');
+          setUserName(session.user.user_metadata?.name || session.user.email?.split('@')[0] || '');
+          setUserCompany(session.user.user_metadata?.company_name || '');
+        }
+      } finally {
+        setLoadingUser(false);
+      }
+    };
+    loadUser();
+  }, []);
 
   // Update profile
   const { mutate: updateProfile, loading: updating } = useMutation(
@@ -20,7 +43,7 @@ export default function SettingsPage() {
     '/api/users/api-keys',
     {
       method: 'POST',
-      onSuccess: (data) => {
+      onSuccess: (data: any) => {
         setApiKey(data.key);
         setShowApiKey(true);
       },
@@ -43,14 +66,18 @@ export default function SettingsPage() {
     },
   });
 
-  const profileForm = useForm({
-    initialValues: {
-      email: 'martin@gymturones.com',
-      company_name: 'GYMTURONES',
-      full_name: 'Martín Gazzera',
-    },
-    onSubmit: updateProfile,
-  });
+  const handleProfileSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    await updateProfile({ email: userEmail, full_name: userName, company_name: userCompany });
+  };
+
+  if (loadingUser) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Spinner />
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-4xl space-y-6">
@@ -80,33 +107,27 @@ export default function SettingsPage() {
       {activeTab === 'profile' && (
         <Card>
           <h2 className="text-xl font-semibold mb-6">Información de Perfil</h2>
-          <form
-            onSubmit={profileForm.handleSubmit}
-            className="space-y-4"
-          >
+          <form onSubmit={handleProfileSubmit} className="space-y-4">
             <Input
               label="Email"
               name="email"
               type="email"
-              value={profileForm.values.email}
-              onChange={profileForm.handleChange}
+              value={userEmail}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setUserEmail(e.target.value)}
             />
             <Input
               label="Nombre Completo"
               name="full_name"
-              value={profileForm.values.full_name}
-              onChange={profileForm.handleChange}
+              value={userName}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setUserName(e.target.value)}
             />
             <Input
               label="Empresa"
               name="company_name"
-              value={profileForm.values.company_name}
-              onChange={profileForm.handleChange}
+              value={userCompany}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setUserCompany(e.target.value)}
             />
-            <Button
-              type="submit"
-              loading={updating}
-            >
+            <Button type="submit" loading={updating}>
               Guardar Cambios
             </Button>
           </form>
@@ -117,17 +138,7 @@ export default function SettingsPage() {
       {activeTab === 'security' && (
         <Card>
           <h2 className="text-xl font-semibold mb-6">Seguridad</h2>
-          <form
-            onSubmit={changePasswordForm.handleSubmit}
-            className="space-y-4"
-          >
-            <Input
-              label="Contraseña Actual"
-              name="current_password"
-              type="password"
-              value={changePasswordForm.values.current_password}
-              onChange={changePasswordForm.handleChange}
-            />
+          <form onSubmit={changePasswordForm.handleSubmit} className="space-y-4">
             <Input
               label="Nueva Contraseña"
               name="new_password"
@@ -142,10 +153,7 @@ export default function SettingsPage() {
               value={changePasswordForm.values.confirm_password}
               onChange={changePasswordForm.handleChange}
             />
-            <Button
-              type="submit"
-              loading={updating}
-            >
+            <Button type="submit" loading={updating}>
               Cambiar Contraseña
             </Button>
           </form>
@@ -158,19 +166,15 @@ export default function SettingsPage() {
           <Card>
             <h2 className="text-xl font-semibold mb-4">Claves API</h2>
             <p className="text-gray-600 mb-4">
-              Las claves API te permiten acceder a la API de WhatsApp Bot
-              programáticamente.
+              Las claves API te permiten acceder a la API programáticamente.
             </p>
-            <Button
-              onClick={() => generateApiKey()}
-              loading={generating}
-            >
+            <Button onClick={() => generateApiKey({})} loading={generating}>
               + Generar Nueva Clave
             </Button>
 
             {showApiKey && (
               <Alert variant="warning" className="mt-4">
-                <p className="font-semibold">Copia tu clave API ahora</p>
+                <p className="font-semibold">Copiá tu clave API ahora</p>
                 <p className="text-sm mt-2">
                   No podrás verla nuevamente por razones de seguridad.
                 </p>
@@ -184,13 +188,10 @@ export default function SettingsPage() {
           <Card>
             <h2 className="text-lg font-semibold mb-4">Documentación API</h2>
             <p className="text-gray-600 mb-4">
-              Consulta nuestra documentación para aprender cómo integrar la API.
+              La documentación completa de la API estará disponible próximamente.
             </p>
-            <Button
-              variant="secondary"
-              onClick={() => window.open('https://docs.example.com', '_blank')}
-            >
-              Ver Documentación
+            <Button variant="secondary" disabled>
+              Documentación en construcción
             </Button>
           </Card>
         </div>
@@ -204,8 +205,7 @@ export default function SettingsPage() {
             <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
               <p className="font-semibold text-blue-900">Plan Actual: Free</p>
               <p className="text-sm text-blue-700 mt-1">
-                Estás en el plan gratuito. Actualiza para acceder a más
-                características.
+                Estás en el plan gratuito. Actualizá para acceder a más características.
               </p>
             </div>
             <Button onClick={() => router.push('/pricing')}>

@@ -29,17 +29,31 @@ export async function requireAuth(
     const { data: { user }, error } = await supabase.auth.getUser(token);
     if (user && !error) {
       // Asegurar que el usuario existe en la base de datos de Prisma
-      await prisma.user.upsert({
-        where: { id: user.id },
-        create: {
-          id: user.id,
-          email: user.email!,
-          name: user.user_metadata?.name || user.email!.split('@')[0],
-          subscription_plan: 'free',
-          subscription_status: 'active',
-        },
-        update: {},
-      }).catch(() => {}); // no bloquear si falla
+      try {
+        // Primero buscar por ID
+        const existing = await prisma.user.findUnique({ where: { id: user.id } });
+        if (!existing) {
+          // Verificar si existe por email (registro anterior con otro sistema)
+          const byEmail = await prisma.user.findUnique({ where: { email: user.email! } });
+          if (byEmail) {
+            // Actualizar el ID para que coincida con Supabase
+            await prisma.user.update({ where: { email: user.email! }, data: { id: user.id } }).catch(() => {});
+          } else {
+            // Crear usuario nuevo
+            await prisma.user.create({
+              data: {
+                id: user.id,
+                email: user.email!,
+                name: user.user_metadata?.name || user.email!.split('@')[0],
+                subscription_plan: 'free',
+                subscription_status: 'active',
+              },
+            });
+          }
+        }
+      } catch (e) {
+        console.error('Error upserting user in DB:', e);
+      }
       return user.id;
     }
   } catch {}

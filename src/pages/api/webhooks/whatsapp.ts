@@ -22,13 +22,16 @@ export default async function handler(
   if (req.method === "GET") {
     const token = req.query["hub.verify_token"] as string;
     const challenge = req.query["hub.challenge"] as string;
+    const mode = req.query["hub.mode"] as string;
 
-    if (verifyWebhookToken(token, verifyToken)) {
+    console.log("Webhook verify attempt:", { mode, tokenReceived: token?.substring(0,8), verifyTokenSet: !!verifyToken, match: token === verifyToken });
+
+    if (mode === "subscribe" && verifyWebhookToken(token, verifyToken)) {
       res.status(200).send(challenge);
       return;
     }
 
-    res.status(403).send("Verification failed");
+    res.status(403).json({ error: "Verification failed", tokenSet: !!verifyToken, tokenLen: verifyToken?.length });
     return;
   }
 
