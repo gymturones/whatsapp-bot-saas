@@ -1,9 +1,7 @@
 // src/lib/openai.ts
 // Integración con OpenAI para respuestas inteligentes del bot
 
-import { PrismaClient } from '@prisma/client';
-
-const prisma = new PrismaClient();
+import { prisma } from '@/lib/supabase';
 
 interface ChatMessage {
   role: 'system' | 'user' | 'assistant';

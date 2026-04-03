@@ -1,8 +1,8 @@
 // src/pages/api/webhooks/whatsapp.ts
 
 import type { NextApiRequest, NextApiResponse } from "next";
-import { PrismaClient } from "@prisma/client";
 import crypto from "crypto";
+import { prisma } from "@/lib/supabase";
 import {
   verifyWebhookToken,
   parseWebhookPayload,
@@ -11,7 +11,17 @@ import {
 } from "@/lib/whatsapp";
 import { generateAIResponse } from "@/lib/openai";
 
-const prisma = new PrismaClient();
+// Disable body parsing so we can verify Meta's HMAC signature on the raw bytes
+export const config = { api: { bodyParser: false } };
+
+async function getRawBody(req: NextApiRequest): Promise<string> {
+  return new Promise((resolve, reject) => {
+    let data = "";
+    req.on("data", (chunk) => (data += chunk));
+    req.on("end", () => resolve(data));
+    req.on("error", reject);
+  });
+}
 
 // Verify Meta's HMAC signature on POST requests
 function verifyMetaSignature(rawBody: string, signature: string | undefined): boolean {
@@ -75,7 +85,7 @@ export default async function handler(
   // POST: Handle incoming messages
   if (req.method === "POST") {
     const signature = req.headers["x-hub-signature-256"] as string | undefined;
-    const rawBody = JSON.stringify(req.body);
+    const rawBody = await getRawBody(req);
     if (!verifyMetaSignature(rawBody, signature)) {
       console.error("❌ Invalid Meta HMAC signature — request rejected");
       return res.status(401).json({ error: "Invalid signature" });
@@ -88,7 +98,15 @@ export default async function handler(
         hasEntry: !!req.body?.entry,
       });
 
-      const payload = parseWebhookPayload(req.body);
+      let parsedBody: any;
+      try {
+        parsedBody = JSON.parse(rawBody);
+      } catch {
+        console.warn("⚠️ Webhook body is not valid JSON");
+        return res.status(200).json({ success: false });
+      }
+
+      const payload = parseWebhookPayload(parsedBody);
 
       if (!payload) {
         console.warn("⚠️ Invalid webhook payload structure");
@@ -144,12 +162,15 @@ async function processIncomingMessage(message: any) {
     });
 
     if (!conversation) {
-      // Create new conversation
-      // For now, assign to the first bot of the user (you'd want to improve this logic)
-      const firstBot = await prisma.bot.findFirst();
+      // Match by whatsapp_phone — find the bot that owns this phone number
+      const matchingBot = await prisma.bot.findFirst({
+        where: { whatsapp_phone: process.env.WHATSAPP_PHONE_NUMBER_ID || "", is_active: true },
+      });
+
+      const firstBot = matchingBot ?? await prisma.bot.findFirst({ where: { is_active: true } });
 
       if (!firstBot) {
-        console.log("No bot found for new conversation");
+        console.log("No active bot found for new conversation");
         return;
       }
 

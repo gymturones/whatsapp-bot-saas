@@ -1,15 +1,13 @@
 // src/pages/api/webhooks/stripe.ts
 
 import type { NextApiRequest, NextApiResponse } from "next";
-import { PrismaClient } from "@prisma/client";
+import { prisma } from "@/lib/supabase";
 import {
   getWebhookEvent,
   handleSubscriptionUpdated,
   handleSubscriptionDeleted,
   handlePaymentSucceeded,
 } from "@/lib/stripe";
-
-const prisma = new PrismaClient();
 const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 
 export const config = {

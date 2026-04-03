@@ -17,17 +17,22 @@ export function sendSuccess<T>(res: NextApiResponse, data: T, status: number = 2
   });
 }
 
-const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
+const JWT_SECRET = process.env.JWT_SECRET;
+if (!JWT_SECRET) {
+  console.error('JWT_SECRET not configured — token generation will fail');
+}
 const JWT_EXPIRES_IN = '7d';
 
 // JWT
 export function generateToken(userId: string): string {
+  if (!JWT_SECRET) throw new Error('JWT_SECRET not configured');
   return jwt.sign({ userId }, JWT_SECRET, {
     expiresIn: JWT_EXPIRES_IN,
   });
 }
 
 export function verifyToken(token: string): { userId: string } | null {
+  if (!JWT_SECRET) return null;
   try {
     return jwt.verify(token, JWT_SECRET) as { userId: string };
   } catch {

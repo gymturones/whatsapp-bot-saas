@@ -58,9 +58,21 @@ async function handlePut(req: NextApiRequest, res: NextApiResponse, id: string) 
   try {
     const validated = UpdateBotSchema.parse(req.body);
 
+    // Map Zod field names → Prisma field names
+    const data: Record<string, any> = {};
+    if (validated.name !== undefined)             data.name = validated.name;
+    if (validated.description !== undefined)      data.description = validated.description;
+    if (validated.phone_number !== undefined)     data.whatsapp_phone = validated.phone_number;
+    if (validated.welcome_message !== undefined)  data.greeting_message = validated.welcome_message;
+    if (validated.fallback_message !== undefined) data.fallback_message = validated.fallback_message;
+    if (validated.is_active !== undefined)        data.is_active = validated.is_active;
+    if (validated.ai_instructions !== undefined)  data.ai_instructions = validated.ai_instructions;
+    if (validated.ai_model !== undefined)         data.ai_model = validated.ai_model;
+    if (validated.ai_temperature !== undefined)   data.ai_temperature = typeof validated.ai_temperature === 'number' ? validated.ai_temperature : 0.7;
+
     const bot = await prisma.bot.update({
       where: { id },
-      data: validated,
+      data,
     });
 
     sendSuccess(res, { bot });
