@@ -59,8 +59,14 @@ export async function requireAuth(
   } catch {}
 
   // 2. Fallback: JWT personalizado firmado con JWT_SECRET
+  const jwtSecret = process.env.JWT_SECRET;
+  if (!jwtSecret) {
+    console.error('JWT_SECRET not configured — cannot verify custom JWT');
+    res.status(401).json({ error: 'Token inválido' });
+    return null;
+  }
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'secret');
+    const decoded = jwt.verify(token, jwtSecret);
     if (typeof decoded === 'object' && 'userId' in decoded) {
       return decoded.userId as string;
     }

@@ -18,7 +18,10 @@ async function getRawBody(req: NextApiRequest): Promise<string> {
 
 function verifySignature(rawBody: string, req: NextApiRequest): boolean {
   const secret = process.env.MERCADO_PAGO_WEBHOOK_SECRET;
-  if (!secret) return true; // skip in dev
+  if (!secret) {
+    console.error("MERCADO_PAGO_WEBHOOK_SECRET not configured — rejecting webhook");
+    return false;
+  }
 
   const xSignature = req.headers["x-signature"] as string;
   const xRequestId = req.headers["x-request-id"] as string;
@@ -53,6 +56,13 @@ async function handlePreapproval(preapprovalId: string) {
   // external_reference = "userId|plan"
   const [userId, plan] = (data.external_reference || "").split("|");
   if (!userId || !plan) return;
+
+  // Verify userId is a valid existing user before any DB writes
+  const userExists = await prisma.user.findUnique({ where: { id: userId }, select: { id: true } });
+  if (!userExists) {
+    console.error(`MP webhook: userId '${userId}' not found in DB — ignoring`);
+    return;
+  }
 
   const status = data.status; // authorized, paused, cancelled, pending
 

@@ -3,6 +3,7 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import { withMiddleware } from "@/middleware/auth";
 import { prisma } from "@/lib/supabase";
+import { CreateBotSchema } from "@/validators/schemas";
 
 async function handler(
   req: NextApiRequest,
@@ -42,6 +43,12 @@ async function handler(
   // POST: Create a new bot
   if (req.method === "POST") {
     try {
+      const parsed = CreateBotSchema.safeParse(req.body);
+      if (!parsed.success) {
+        res.status(400).json({ error: parsed.error.errors[0]?.message || "Datos inválidos" });
+        return;
+      }
+
       const {
         name,
         description,
@@ -51,12 +58,7 @@ async function handler(
         ai_instructions,
         ai_model,
         ai_temperature,
-      } = req.body;
-
-      if (!name) {
-        res.status(400).json({ error: "El nombre es obligatorio" });
-        return;
-      }
+      } = parsed.data;
 
       const bot = await prisma.bot.create({
         data: {
@@ -69,7 +71,7 @@ async function handler(
           fallback_message: fallback_message || "Disculpá, no pude procesar tu mensaje.",
           ai_instructions: ai_instructions || null,
           ai_model: ai_model || "gpt-3.5-turbo",
-          ai_temperature: ai_temperature ? parseFloat(ai_temperature) : 0.7,
+          ai_temperature: typeof ai_temperature === 'number' ? ai_temperature : 0.7,
           auto_reply_enabled: true,
         },
       });

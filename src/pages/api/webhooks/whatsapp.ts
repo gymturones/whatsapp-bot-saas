@@ -2,6 +2,7 @@
 
 import type { NextApiRequest, NextApiResponse } from "next";
 import { PrismaClient } from "@prisma/client";
+import crypto from "crypto";
 import {
   verifyWebhookToken,
   parseWebhookPayload,
@@ -11,6 +12,22 @@ import {
 import { generateAIResponse } from "@/lib/openai";
 
 const prisma = new PrismaClient();
+
+// Verify Meta's HMAC signature on POST requests
+function verifyMetaSignature(rawBody: string, signature: string | undefined): boolean {
+  const appSecret = process.env.WHATSAPP_APP_SECRET;
+  if (!appSecret) {
+    console.warn("WHATSAPP_APP_SECRET not set — skipping HMAC verification");
+    return true; // allow in dev if not configured, but log warning
+  }
+  if (!signature) return false;
+  const expected = `sha256=${crypto.createHmac("sha256", appSecret).update(rawBody).digest("hex")}`;
+  try {
+    return crypto.timingSafeEqual(Buffer.from(signature), Buffer.from(expected));
+  } catch {
+    return false;
+  }
+}
 
 export default async function handler(
   req: NextApiRequest,
@@ -57,6 +74,13 @@ export default async function handler(
 
   // POST: Handle incoming messages
   if (req.method === "POST") {
+    const signature = req.headers["x-hub-signature-256"] as string | undefined;
+    const rawBody = JSON.stringify(req.body);
+    if (!verifyMetaSignature(rawBody, signature)) {
+      console.error("❌ Invalid Meta HMAC signature — request rejected");
+      return res.status(401).json({ error: "Invalid signature" });
+    }
+
     try {
       console.log("📨 Incoming webhook POST", {
         bodyType: typeof req.body,
