@@ -16,7 +16,13 @@ export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse
 ) {
-  const verifyToken = process.env.WHATSAPP_VERIFY_TOKEN!;
+  const verifyToken = process.env.WHATSAPP_VERIFY_TOKEN;
+
+  // Validate verify token is configured
+  if (!verifyToken) {
+    console.error("WHATSAPP_VERIFY_TOKEN not configured in environment");
+    return res.status(500).json({ error: "Server misconfiguration: verify token not set" });
+  }
 
   // GET: Webhook verification
   if (req.method === "GET") {
@@ -24,40 +30,68 @@ export default async function handler(
     const challenge = req.query["hub.challenge"] as string;
     const mode = req.query["hub.mode"] as string;
 
-    console.log("Webhook verify attempt:", { mode, tokenReceived: token?.substring(0,8), verifyTokenSet: !!verifyToken, match: token === verifyToken });
+    const isValidMode = mode === "subscribe";
+    const isValidToken = verifyWebhookToken(token, verifyToken);
 
-    if (mode === "subscribe" && verifyWebhookToken(token, verifyToken)) {
+    console.log("WhatsApp webhook verification attempt:", {
+      mode,
+      isValidMode,
+      tokenMatch: isValidToken,
+      receivedTokenLength: token?.length || 0,
+      verifyTokenLength: verifyToken.length,
+    });
+
+    if (isValidMode && isValidToken) {
+      console.log("✅ Webhook verification successful");
       res.status(200).send(challenge);
       return;
     }
 
-    res.status(403).json({ error: "Verification failed", tokenSet: !!verifyToken, tokenLen: verifyToken?.length });
+    console.error("❌ Webhook verification failed", {
+      reasonModeInvalid: !isValidMode,
+      reasonTokenInvalid: !isValidToken,
+    });
+    res.status(403).json({ error: "Verification failed" });
     return;
   }
 
   // POST: Handle incoming messages
   if (req.method === "POST") {
     try {
+      console.log("📨 Incoming webhook POST", {
+        bodyType: typeof req.body,
+        hasObject: !!req.body?.object,
+        hasEntry: !!req.body?.entry,
+      });
+
       const payload = parseWebhookPayload(req.body);
 
       if (!payload) {
+        console.warn("⚠️ Invalid webhook payload structure");
         res.status(200).json({ success: false });
         return;
       }
 
+      console.log("✅ Webhook payload parsed", {
+        messageCount: payload.messages.length,
+        statusCount: payload.statuses.length,
+      });
+
       // Process incoming messages
       for (const message of payload.messages) {
+        console.log("📝 Processing incoming message", { messageId: message.id, from: message.from });
         await processIncomingMessage(message);
       }
 
       // Process status updates
       for (const status of payload.statuses) {
+        console.log("📊 Processing status update", { messageId: status.message_id, status: status.status });
         await processStatusUpdate(status);
       }
 
       res.status(200).json({ success: true });
     } catch (error) {
-      console.error("Webhook error:", error);
+      console.error("❌ Webhook error:", error);
       res.status(500).json({ error: "Webhook processing failed" });
     }
   }

@@ -2,7 +2,7 @@ import { NextApiRequest, NextApiResponse } from 'next';
 import { withMiddleware } from '@/middleware/auth';
 import { SendMessageSchema } from '@/validators/schemas';
 import { prisma } from '@/lib/supabase';
-import { sendMessage } from '@/lib/whatsapp';
+import { sendWhatsAppMessage } from '@/lib/whatsapp';
 import { sendError, sendSuccess } from '@/utils/helpers';
 
 // POST /api/messages/send
@@ -44,7 +44,7 @@ async function handleSendMessage(
     }
 
     // Enviar mensaje via WhatsApp
-    await sendMessage(validated.phone_number, validated.message);
+    await sendWhatsAppMessage(validated.phone_number, validated.message);
 
     // Guardar en DB
     await prisma.message.create({

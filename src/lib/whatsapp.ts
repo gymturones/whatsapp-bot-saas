@@ -2,10 +2,21 @@
 
 import axios, { AxiosError } from "axios";
 
-const WHATSAPP_API_URL = "https://graph.instagram.com/v18.0";
+const WHATSAPP_API_URL = "https://graph.instagram.com/v22.0";
 const WHATSAPP_BUSINESS_ACCOUNT_ID = process.env.WHATSAPP_BUSINESS_ACCOUNT_ID;
-const WHATSAPP_PHONE_NUMBER_ID = process.env.WHATSAPP_BUSINESS_PHONE_NUMBER_ID;
+const WHATSAPP_PHONE_NUMBER_ID =
+  process.env.WHATSAPP_PHONE_NUMBER_ID ||
+  process.env.WHATSAPP_BUSINESS_PHONE_NUMBER_ID;
 const WHATSAPP_ACCESS_TOKEN = process.env.WHATSAPP_ACCESS_TOKEN;
+
+// Validate critical environment variables
+if (!WHATSAPP_PHONE_NUMBER_ID || !WHATSAPP_ACCESS_TOKEN || !WHATSAPP_BUSINESS_ACCOUNT_ID) {
+  console.error("Missing critical WhatsApp environment variables:", {
+    hasPhoneId: !!WHATSAPP_PHONE_NUMBER_ID,
+    hasAccessToken: !!WHATSAPP_ACCESS_TOKEN,
+    hasAccountId: !!WHATSAPP_BUSINESS_ACCOUNT_ID,
+  });
+}
 
 interface WhatsAppMessage {
   id: string;
