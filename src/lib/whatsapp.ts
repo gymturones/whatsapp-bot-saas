@@ -154,7 +154,7 @@ export async function uploadWhatsAppMedia(
 ) {
   try {
     const formData = new FormData();
-    formData.append("file", new Blob([fileStream], { type: mimeType }));
+    formData.append("file", new Blob([fileStream.buffer as ArrayBuffer], { type: mimeType }));
     formData.append("type", mimeType);
 
     const response = await axios.post(

@@ -41,7 +41,7 @@ async function handleGetStats(
     }
 
     // Estadísticas globales del usuario
-    const [bots, conversations, messages, subscription] = await Promise.all([
+    const [bots, conversations, messages, user] = await Promise.all([
       prisma.bot.count({ where: { user_id: userId } }),
       prisma.conversation.count({
         where: { bot: { user_id: userId } },
@@ -49,16 +49,14 @@ async function handleGetStats(
       prisma.message.count({
         where: { conversation: { bot: { user_id: userId } } },
       }),
-      prisma.subscription.findFirst({
-        where: { user_id: userId, status: 'active' },
-      }),
+      prisma.user.findUnique({ where: { id: userId }, select: { subscription_plan: true } }),
     ]);
 
     sendSuccess(res, {
       bots,
       conversations,
       messages,
-      subscription_plan: subscription?.plan || 'free',
+      subscription_plan: user?.subscription_plan || 'free',
     });
   } catch (error) {
     sendError(res, error);

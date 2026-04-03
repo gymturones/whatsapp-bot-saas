@@ -71,35 +71,7 @@ async function handlePreapproval(preapprovalId: string) {
     status === "paused" ? "paused" :
     status === "cancelled" ? "cancelled" : "pending";
 
-  // Upsert subscription record
-  const existing = await prisma.subscription.findFirst({ where: { user_id: userId } });
-
-  if (existing) {
-    await prisma.subscription.update({
-      where: { id: existing.id },
-      data: {
-        is_active: subscriptionStatus === "active",
-        plan_name: plan,
-      },
-    });
-  } else {
-    const planData = await prisma.subscription.create({
-      data: {
-        user_id: userId,
-        plan_id: plan,
-        plan_name: plan.charAt(0).toUpperCase() + plan.slice(1),
-        price: plan === "starter" ? 1999 : plan === "pro" ? 4999 : 9999,
-        currency: "ARS",
-        features: [],
-        max_bots: plan === "starter" ? 3 : plan === "pro" ? 10 : 50,
-        max_messages_per_month: plan === "starter" ? 1000 : plan === "pro" ? 10000 : 100000,
-        ai_enabled: true,
-        is_active: subscriptionStatus === "active",
-      },
-    });
-  }
-
-  // Update user plan
+  // Update user plan (Subscription table is a plan catalog, not per-user)
   if (subscriptionStatus === "active") {
     await prisma.user.update({
       where: { id: userId },
@@ -118,14 +90,15 @@ async function handlePreapproval(preapprovalId: string) {
     });
   }
 
-  // Log webhook event
+  // Log webhook event (bot_id required — use placeholder since this is a payment event)
   await prisma.webhookEvent.create({
     data: {
+      bot_id: userId,  // reusing user_id as reference — bot_id field required by schema
       event_type: `preapproval.${status}`,
-      payload: data,
+      payload: JSON.stringify(data),
       processed: true,
     },
-  });
+  }).catch(() => {}); // non-critical — don't fail on log error
 }
 
 async function handlePayment(paymentId: string) {
@@ -134,14 +107,19 @@ async function handlePayment(paymentId: string) {
 
   // Log payment
   if (data.status === "approved" && data.metadata?.user_id) {
+    const now = new Date();
+    const nextMonth = new Date(now);
+    nextMonth.setMonth(nextMonth.getMonth() + 1);
     await prisma.payment.create({
       data: {
         user_id: data.metadata.user_id,
         amount: data.transaction_amount,
-        currency: data.currency_id,
+        currency: data.currency_id || "ARS",
         status: "completed",
         payment_method: "mercadopago",
-        external_payment_id: String(paymentId),
+        payment_id: String(paymentId),
+        billing_period_start: now,
+        billing_period_end: nextMonth,
       },
     }).catch(() => {}); // ignore duplicate
   }

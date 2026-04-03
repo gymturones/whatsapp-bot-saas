@@ -124,8 +124,7 @@ async function handleUpdateConversation(
     const updated = await prisma.conversation.update({
       where: { id },
       data: {
-        customer_name: req.body.customer_name,
-        notes: req.body.notes,
+        contact_name: req.body.contact_name ?? req.body.customer_name,
       },
       include: { messages: true },
     });

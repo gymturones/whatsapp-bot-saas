@@ -82,31 +82,41 @@ async function handlePost(
     const validated = CreateBotSchema.parse(req.body);
 
     // Verificar que el usuario no tenga demasiados bots (según plan)
-    const botCount = await prisma.bot.count({ where: { user_id: userId } });
-    const subscription = await prisma.subscription.findFirst({
-      where: { user_id: userId, status: 'active' },
-    });
+    const [botCount, user] = await Promise.all([
+      prisma.bot.count({ where: { user_id: userId } }),
+      prisma.user.findUnique({ where: { id: userId }, select: { subscription_plan: true } }),
+    ]);
 
-    const maxBots = {
+    const maxBots: Record<string, number> = {
       free: 1,
       starter: 5,
       pro: 25,
       business: 100,
-    }[subscription?.plan || 'free'];
+    };
+    const limit = maxBots[user?.subscription_plan || 'free'] ?? 1;
 
-    if (botCount >= maxBots) {
+    if (botCount >= limit) {
       return sendError(
         res,
-        new Error(`Has alcanzado el límite de ${maxBots} bots para tu plan`),
+        new Error(`Has alcanzado el límite de ${limit} bots para tu plan`),
         409
       );
     }
 
-    // Crear bot
+    // Crear bot — mapear campos Zod → Prisma
     const bot = await prisma.bot.create({
       data: {
-        ...validated,
         user_id: userId,
+        name: validated.name,
+        description: validated.description,
+        whatsapp_phone: validated.phone_number || "",
+        whatsapp_api_token: "",
+        greeting_message: validated.welcome_message,
+        fallback_message: validated.fallback_message,
+        is_active: validated.is_active,
+        ai_model: validated.ai_model,
+        ai_temperature: typeof validated.ai_temperature === 'number' ? validated.ai_temperature : 0.7,
+        ai_instructions: validated.ai_instructions,
       },
     });
 

@@ -39,7 +39,7 @@ async function handleGet(res: NextApiResponse, bot: any) {
     const enriched = await prisma.bot.findUnique({
       where: { id: bot.id },
       include: {
-        bot_responses: { orderBy: { order: 'asc' } },
+        responses: { orderBy: { created_at: 'asc' } },
         conversations: { orderBy: { updated_at: 'desc' }, take: 5 },
         _count: {
           select: { conversations: true, messages: true },

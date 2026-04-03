@@ -30,7 +30,7 @@ async function handleSendMessage(
     let conversation = await prisma.conversation.findFirst({
       where: {
         bot_id: validated.bot_id,
-        phone_number: validated.phone_number,
+        whatsapp_contact: validated.phone_number,
       },
     });
 
@@ -38,7 +38,8 @@ async function handleSendMessage(
       conversation = await prisma.conversation.create({
         data: {
           bot_id: validated.bot_id,
-          phone_number: validated.phone_number,
+          user_id: bot.user_id,
+          whatsapp_contact: validated.phone_number,
         },
       });
     }
@@ -50,8 +51,10 @@ async function handleSendMessage(
     await prisma.message.create({
       data: {
         conversation_id: conversation.id,
+        bot_id: validated.bot_id,
         direction: 'outgoing',
         content: validated.message,
+        sender_phone: bot.whatsapp_phone,
       },
     });
 
@@ -111,16 +114,14 @@ async function handleGetStats(
       prisma.message.count({
         where: { conversation: { bot: { user_id: userId } } },
       }),
-      prisma.subscription.findFirst({
-        where: { user_id: userId, status: 'active' },
-      }),
+      prisma.user.findUnique({ where: { id: userId! }, select: { subscription_plan: true } }),
     ]);
 
     sendSuccess(res, {
       bots,
       conversations,
       messages,
-      subscription_plan: subscriptions?.plan || 'free',
+      subscription_plan: subscriptions?.subscription_plan || 'free',
     });
   } catch (error) {
     sendError(res, error);

@@ -27,13 +27,13 @@ export const CreateBotSchema = z.object({
 
 export const UpdateBotSchema = CreateBotSchema.partial();
 
-// Bot Response (respuestas automáticas)
+// Bot Response (respuestas automáticas) — campos alineados con schema Prisma
 export const CreateBotResponseSchema = z.object({
   bot_id: z.string().uuid(),
-  trigger_keyword: z.string().min(1, 'Palabra clave requerida'),
-  response_text: z.string().min(1, 'Respuesta requerida'),
-  response_type: z.enum(['text', 'template']).default('text'),
-  order: z.number().int().min(0).default(0),
+  trigger: z.string().min(1, 'Palabra clave requerida'),
+  response: z.string().min(1, 'Respuesta requerida'),
+  trigger_type: z.enum(['keyword', 'regex', 'contains']).default('keyword'),
+  is_active: z.boolean().default(true),
 });
 
 export const UpdateBotResponseSchema = CreateBotResponseSchema.partial();

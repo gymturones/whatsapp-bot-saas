@@ -32,7 +32,7 @@ async function handleGetResponses(
 
     const responses = await prisma.botResponse.findMany({
       where: { bot_id: botId },
-      orderBy: { order: 'asc' },
+      orderBy: { created_at: 'asc' },
     });
 
     sendSuccess(res, { responses });
