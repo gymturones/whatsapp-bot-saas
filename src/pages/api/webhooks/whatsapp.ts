@@ -92,24 +92,21 @@ export default async function handler(
     }
 
     try {
-      console.log("📨 Incoming webhook POST", {
-        bodyType: typeof req.body,
-        hasObject: !!req.body?.object,
-        hasEntry: !!req.body?.entry,
-      });
+      console.log("📨 Incoming webhook POST rawBodyLen=" + rawBody.length + " sig=" + (signature ? "yes" : "no"));
 
       let parsedBody: any;
       try {
         parsedBody = JSON.parse(rawBody);
-      } catch {
-        console.warn("⚠️ Webhook body is not valid JSON");
+        console.log("📦 Parsed body object=" + parsedBody?.object + " entryLen=" + (parsedBody?.entry?.length || 0));
+      } catch (parseErr) {
+        console.log("⚠️ JSON parse failed: " + String(parseErr) + " rawBody(50)=" + rawBody.substring(0, 50));
         return res.status(200).json({ success: false });
       }
 
       const payload = parseWebhookPayload(parsedBody);
 
       if (!payload) {
-        console.warn("⚠️ Invalid webhook payload structure");
+        console.log("⚠️ Invalid payload structure object=" + parsedBody?.object);
         res.status(200).json({ success: false });
         return;
       }
