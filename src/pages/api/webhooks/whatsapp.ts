@@ -131,14 +131,14 @@ export default async function handler(
         await processStatusUpdate(status);
       }
 
-      res.status(200).json({ success: true });
+      return res.status(200).json({ success: true });
     } catch (error) {
       console.error("❌ Webhook error:", error);
-      res.status(500).json({ error: "Webhook processing failed" });
+      return res.status(500).json({ error: "Webhook processing failed" });
     }
   }
 
-  res.status(405).json({ error: "Method not allowed" });
+  return res.status(405).json({ error: "Method not allowed" });
 }
 
 async function processIncomingMessage(message: any) {
@@ -152,9 +152,16 @@ async function processIncomingMessage(message: any) {
     } = message;
 
     // Find or create conversation
+    // Match by phone AND the bot that owns this phone number
+    const matchingBot = await prisma.bot.findFirst({
+      where: { whatsapp_phone: process.env.WHATSAPP_PHONE_NUMBER_ID || "", is_active: true },
+    });
+    const firstBot = matchingBot ?? await prisma.bot.findFirst({ where: { is_active: true } });
+
     let conversation = await prisma.conversation.findFirst({
       where: {
         whatsapp_contact: phoneNumber,
+        ...(firstBot ? { bot_id: firstBot.id } : {}),
       },
       include: {
         bot: true,
@@ -162,12 +169,6 @@ async function processIncomingMessage(message: any) {
     });
 
     if (!conversation) {
-      // Match by whatsapp_phone — find the bot that owns this phone number
-      const matchingBot = await prisma.bot.findFirst({
-        where: { whatsapp_phone: process.env.WHATSAPP_PHONE_NUMBER_ID || "", is_active: true },
-      });
-
-      const firstBot = matchingBot ?? await prisma.bot.findFirst({ where: { is_active: true } });
 
       if (!firstBot) {
         console.log("No active bot found for new conversation");
