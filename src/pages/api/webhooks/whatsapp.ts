@@ -25,7 +25,7 @@ async function getRawBody(req: NextApiRequest): Promise<string> {
 
 // Verify Meta's HMAC signature on POST requests
 function verifyMetaSignature(rawBody: string, signature: string | undefined): boolean {
-  const appSecret = process.env.WHATSAPP_APP_SECRET;
+  const appSecret = (process.env.WHATSAPP_APP_SECRET || "").trim();
   if (!appSecret) {
     console.warn("WHATSAPP_APP_SECRET not set — skipping HMAC verification");
     return true; // allow in dev if not configured, but log warning
@@ -43,7 +43,7 @@ export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse
 ) {
-  const verifyToken = process.env.WHATSAPP_VERIFY_TOKEN;
+  const verifyToken = (process.env.WHATSAPP_VERIFY_TOKEN || "").trim();
 
   // Validate verify token is configured
   if (!verifyToken) {
@@ -151,7 +151,7 @@ async function processIncomingMessage(message: any) {
     // Find or create conversation
     // Match by phone AND the bot that owns this phone number
     const matchingBot = await prisma.bot.findFirst({
-      where: { whatsapp_phone: process.env.WHATSAPP_PHONE_NUMBER_ID || "", is_active: true },
+      where: { whatsapp_phone: (process.env.WHATSAPP_PHONE_NUMBER_ID || "").trim(), is_active: true },
     });
     const firstBot = matchingBot ?? await prisma.bot.findFirst({ where: { is_active: true } });
 
