@@ -7,19 +7,19 @@ import { prisma } from "@/lib/supabase";
 
 const MP_PLANS: Record<string, { planId: string; name: string; price: number }> = {
   starter: {
-    planId: process.env.MERCADO_PAGO_PLAN_STARTER_ID!,
+    planId: process.env.MERCADO_PAGO_PLAN_STARTER_ID || '5aee3efe01594aec93eade037360e7ed',
     name: "Starter",
-    price: 1999,
+    price: 10000,
   },
   pro: {
-    planId: process.env.MERCADO_PAGO_PLAN_PRO_ID!,
+    planId: process.env.MERCADO_PAGO_PLAN_PRO_ID || 'd1233b2ebed2412d833817ead1641c28',
     name: "Pro",
-    price: 4999,
+    price: 25000,
   },
   business: {
-    planId: process.env.MERCADO_PAGO_PLAN_BUSINESS_ID!,
+    planId: process.env.MERCADO_PAGO_PLAN_BUSINESS_ID || '60be6d9eded5456d85350bd3d109cfd3',
     name: "Business",
-    price: 9999,
+    price: 35000,
   },
 };
 
@@ -54,34 +54,24 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return res.status(404).json({ error: "Usuario no encontrado" });
     }
 
-    // Create MP preapproval (suscripción) linked to plan
-    const mpRes = await fetch("https://api.mercadopago.com/preapproval", {
-      method: "POST",
+    // Obtener el init_point del plan directamente desde MP (sin crear preapproval)
+    const mpRes = await fetch(`https://api.mercadopago.com/preapproval_plan/${planConfig.planId}`, {
       headers: {
         Authorization: `Bearer ${process.env.MERCADO_PAGO_ACCESS_TOKEN}`,
-        "Content-Type": "application/json",
       },
-      body: JSON.stringify({
-        preapproval_plan_id: planConfig.planId,
-        payer_email: user.email,
-        reason: `WhatsApp Bot SaaS - Plan ${planConfig.name}`,
-        external_reference: `${userId}|${plan}`,
-        back_url: `${process.env.NEXT_PUBLIC_APP_URL}/dashboard?plan=${plan}&status=success`,
-        status: "pending",
-      }),
     });
 
     const mpData = await mpRes.json();
 
     if (!mpRes.ok || !mpData.init_point) {
-      console.error("MP preapproval error:", mpData);
-      return res.status(500).json({ error: "Error al crear la suscripción en MercadoPago" });
+      console.error("MP plan fetch error:", mpData);
+      return res.status(500).json({ error: "Error al obtener el plan de MercadoPago" });
     }
 
     return res.status(200).json({
       success: true,
       url: mpData.init_point,
-      preapprovalId: mpData.id,
+      planId: planConfig.planId,
     });
   } catch (error) {
     console.error("Checkout error:", error);

@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
-import { useAuth, useFetch, useMutation } from '@/hooks';
+import { useAuth, useFetch } from '@/hooks';
 import { Card, Button, Spinner, Alert, Modal } from '@/components/UI';
 import { BotCard, StatsCard } from '@/components/DomainComponents';
 
@@ -35,26 +35,51 @@ export default function DashboardPage() {
   const { data: stats, loading: statsLoading } = useFetch('/api/stats');
 
   // Fetch bots
-  const { data: botsData, loading: botsLoading } = useFetch(
+  const { data: botsData, loading: botsLoading } = useFetch<any>(
     '/api/bots?page=1&limit=12'
   );
+  const [localBots, setLocalBots] = useState<any[]>([]);
+
+  useEffect(() => {
+    if (botsData?.bots) setLocalBots(botsData.bots);
+  }, [botsData]);
 
   // Delete bot
-  const { mutate: deleteBot, loading: deleting } = useMutation(
-    '/api/bots/[id]',
-    {
-      method: 'DELETE',
-      onSuccess: () => {
-        setShowDeleteModal(null);
-        router.replace(router.asPath);
-      },
+  const [deleting, setDeleting] = useState(false);
+
+  const handleDeleteBot = async (botId: string) => {
+    try {
+      setDeleting(true);
+      const token = localStorage.getItem('sb_access_token') || '';
+      const res = await fetch(`/api/bots/${botId}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) throw new Error('Error eliminando bot');
+      setShowDeleteModal(null);
+      setLocalBots(prev => prev.filter(b => b.id !== botId));
+    } catch (err) {
+      console.error('Error eliminando bot:', err);
+    } finally {
+      setDeleting(false);
     }
-  );
+  };
 
   if (authLoading || statsLoading || botsLoading) {
     return (
-      <div className="flex items-center justify-center h-screen">
-        <Spinner size="lg" />
+      <div className="space-y-8 animate-pulse">
+        <div className="h-10 w-48 bg-slate-800 rounded-lg" />
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          {[1,2,3,4].map(i => (
+            <div key={i} className="bg-slate-800/60 border border-slate-700 rounded-xl p-6 h-28" />
+          ))}
+        </div>
+        <div className="h-8 w-32 bg-slate-800 rounded-lg" />
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {[1,2,3].map(i => (
+            <div key={i} className="bg-slate-800/60 border border-slate-700 rounded-xl p-6 h-48" />
+          ))}
+        </div>
       </div>
     );
   }
@@ -63,9 +88,9 @@ export default function DashboardPage() {
     <div className="space-y-8">
       {/* Banner post-pago MercadoPago */}
       {subscriptionBanner && (
-        <div className="flex items-center gap-3 bg-green-50 border border-green-300 text-green-800 rounded-xl px-5 py-4 shadow-sm">
+        <div className="flex items-center gap-3 bg-green-500/10 border border-green-500/30 text-green-300 rounded-xl px-5 py-4">
           <svg
-            className="w-6 h-6 text-green-600 shrink-0"
+            className="w-6 h-6 text-green-400 shrink-0"
             fill="none"
             viewBox="0 0 24 24"
             stroke="currentColor"
@@ -75,7 +100,7 @@ export default function DashboardPage() {
           </svg>
           <p className="font-semibold text-sm">{subscriptionBanner}</p>
           <button
-            className="ml-auto text-green-600 hover:text-green-800 transition-colors"
+            className="ml-auto text-green-400 hover:text-green-300 transition-colors"
             onClick={() => setSubscriptionBanner(null)}
             aria-label="Cerrar"
           >
@@ -89,8 +114,8 @@ export default function DashboardPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-4xl font-bold text-gray-900">Dashboard</h1>
-          <p className="text-gray-600 mt-1">
+          <h1 className="text-4xl font-bold text-white">Dashboard</h1>
+          <p className="text-slate-400 mt-1">
             Bienvenido de vuelta a tu panel de control
           </p>
         </div>
@@ -135,11 +160,11 @@ export default function DashboardPage() {
 
       {/* Bots Grid */}
       <div>
-        <h2 className="text-2xl font-bold text-gray-900 mb-6">Tus Bots</h2>
+        <h2 className="text-2xl font-bold text-white mb-6">Tus Bots</h2>
 
-        {!botsData?.bots || botsData.bots.length === 0 ? (
+        {localBots.length === 0 && !botsLoading ? (
           <Card className="text-center py-12">
-            <p className="text-gray-600 mb-4">Aún no tienes bots creados</p>
+            <p className="text-slate-400 mb-4">Aún no tenés bots creados</p>
             <Button onClick={() => router.push('/dashboard/bots/new')}>
               Crear tu primer bot
             </Button>
@@ -147,7 +172,7 @@ export default function DashboardPage() {
         ) : (
           <>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {botsData.bots.map((bot: any) => (
+              {localBots.map((bot: any) => (
                 <BotCard
                   key={bot.id}
                   bot={bot}
@@ -202,7 +227,7 @@ export default function DashboardPage() {
               loading={deleting}
               onClick={() => {
                 if (showDeleteModal) {
-                  deleteBot().catch(() => {});
+                  handleDeleteBot(showDeleteModal);
                 }
               }}
             >
@@ -211,7 +236,7 @@ export default function DashboardPage() {
           </>
         }
       >
-        <p className="text-gray-600">
+        <p className="text-slate-300">
           ¿Estás seguro? Esta acción no se puede deshacer. Se eliminarán todas las
           conversaciones y mensajes asociados.
         </p>

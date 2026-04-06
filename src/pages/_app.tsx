@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import '@/styles/globals.css';
 import { DashboardLayout } from '@/components/DashboardLayout';
+import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { Spinner } from '@/components/UI';
 
 function MyApp({ Component, pageProps }: AppProps) {
@@ -12,8 +13,7 @@ function MyApp({ Component, pageProps }: AppProps) {
   const [mounted, setMounted] = useState(false);
 
   // Verificar si la página necesita el layout del dashboard
-  const isDashboardPage = router.pathname.startsWith('/dashboard') || 
-                          router.pathname.startsWith('/pricing');
+  const isDashboardPage = router.pathname.startsWith('/dashboard');
 
   useEffect(() => {
     setMounted(true);
@@ -29,23 +29,31 @@ function MyApp({ Component, pageProps }: AppProps) {
 
   if (!mounted) {
     return (
-      <div className="flex items-center justify-center h-screen bg-gray-50">
-        <Spinner size="lg" />
-      </div>
+      <ErrorBoundary>
+        <div className="flex items-center justify-center h-screen bg-gray-50">
+          <Spinner size="lg" />
+        </div>
+      </ErrorBoundary>
     );
   }
 
   // Aplicar layout del dashboard
   if (isDashboardPage) {
     return (
-      <DashboardLayout>
-        <Component {...pageProps} />
-      </DashboardLayout>
+      <ErrorBoundary>
+        <DashboardLayout>
+          <Component {...pageProps} />
+        </DashboardLayout>
+      </ErrorBoundary>
     );
   }
 
   // Sin layout (Auth pages, Landing page, etc.)
-  return <Component {...pageProps} />;
+  return (
+    <ErrorBoundary>
+      <Component {...pageProps} />
+    </ErrorBoundary>
+  );
 }
 
 export default MyApp;

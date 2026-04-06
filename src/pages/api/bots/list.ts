@@ -18,7 +18,7 @@ async function handler(
   }
 }
 
-// GET /api/bots - Listar bots del usuario
+// GET /api/bots/list - Listar bots del usuario
 async function handleGet(
   req: NextApiRequest,
   res: NextApiResponse,
@@ -40,7 +40,7 @@ async function handleGet(
         orderBy: { created_at: 'desc' },
         include: {
           _count: {
-            select: { conversations: true, messages: true },
+            select: { conversations: true, messages: true, responses: true },
           },
         },
       }),
@@ -49,8 +49,11 @@ async function handleGet(
 
     const formatted = bots.map((bot) => ({
       ...bot,
+      phone_number: bot.whatsapp_phone,
+      welcome_message: bot.greeting_message,
       conversation_count: bot._count.conversations,
       message_count: bot._count.messages,
+      response_count: bot._count.responses,
     }));
 
     sendSuccess(res, {
@@ -67,7 +70,7 @@ async function handleGet(
   }
 }
 
-// POST /api/bots - Crear nuevo bot
+// POST /api/bots/list - Crear nuevo bot
 async function handlePost(
   req: NextApiRequest,
   res: NextApiResponse,
@@ -103,20 +106,21 @@ async function handlePost(
       );
     }
 
-    // Crear bot — mapear campos Zod → Prisma
+    // Crear bot — campos ya alineados con Prisma schema
     const bot = await prisma.bot.create({
       data: {
         user_id: userId,
         name: validated.name,
-        description: validated.description,
-        whatsapp_phone: validated.phone_number || "",
-        whatsapp_api_token: "",
-        greeting_message: validated.welcome_message,
-        fallback_message: validated.fallback_message,
-        is_active: validated.is_active,
-        ai_model: validated.ai_model,
-        ai_temperature: typeof validated.ai_temperature === 'number' ? validated.ai_temperature : 0.7,
-        ai_instructions: validated.ai_instructions,
+        description: validated.description || null,
+        whatsapp_phone: validated.whatsapp_phone,
+        whatsapp_api_token: validated.whatsapp_api_token || '',
+        greeting_message: validated.greeting_message || 'Hola! 👋 ¿En qué puedo ayudarte?',
+        fallback_message: validated.fallback_message || 'Lo siento, no entendí. ¿Podrías reformular tu pregunta?',
+        is_active: validated.is_active ?? true,
+        auto_reply_enabled: validated.auto_reply_enabled ?? true,
+        ai_model: validated.ai_model || 'gpt-3.5-turbo',
+        ai_temperature: validated.ai_temperature ?? 0.7,
+        ai_instructions: validated.ai_instructions || null,
       },
     });
 

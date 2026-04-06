@@ -1,38 +1,85 @@
+import Head from 'next/head'
+
 export default function Privacy() {
   return (
-    <div style={{ maxWidth: 800, margin: "0 auto", padding: "40px 20px", fontFamily: "sans-serif", lineHeight: 1.6 }}>
-      <h1>Política de Privacidad</h1>
-      <p><strong>Última actualización:</strong> Abril 2026</p>
+    <>
+      <Head>
+        <title>Política de Privacidad - BotPyme</title>
+        <meta name="description" content="Política de privacidad de BotPyme." />
+      </Head>
+      <div className="min-h-screen bg-slate-950 text-white">
+        <div className="max-w-3xl mx-auto px-6 py-16 space-y-8">
+          <div>
+            <h1 className="text-4xl font-bold text-white mb-2">Política de Privacidad</h1>
+            <p className="text-slate-400 text-sm">Última actualización: Abril 2026</p>
+          </div>
 
-      <h2>1. Información que recopilamos</h2>
-      <p>Recopilamos información que usted nos proporciona directamente, como nombre, email y número de teléfono, al registrarse en nuestra plataforma.</p>
+          <div className="prose prose-invert prose-slate max-w-none space-y-6">
+            <section className="bg-slate-900/60 border border-slate-800 rounded-xl p-6">
+              <h2 className="text-lg font-semibold text-white mb-3">1. Información que recopilamos</h2>
+              <p className="text-slate-300 text-sm leading-relaxed">
+                Recopilamos la información que nos proporcionás al registrarte: nombre, email y número de teléfono.
+                También recopilamos datos de uso de la plataforma y los mensajes procesados a través de los bots.
+              </p>
+            </section>
 
-      <h2>2. Uso de la información</h2>
-      <p>Utilizamos la información recopilada para:</p>
-      <ul>
-        <li>Proveer y mejorar nuestros servicios de chatbot para WhatsApp</li>
-        <li>Procesar pagos y gestionar suscripciones</li>
-        <li>Comunicarnos con usted sobre su cuenta</li>
-        <li>Cumplir con obligaciones legales</li>
-      </ul>
+            <section className="bg-slate-900/60 border border-slate-800 rounded-xl p-6">
+              <h2 className="text-lg font-semibold text-white mb-3">2. Uso de la información</h2>
+              <ul className="text-slate-300 text-sm leading-relaxed space-y-1">
+                <li>Proveer y mejorar nuestros servicios de chatbot para WhatsApp</li>
+                <li>Procesar pagos y gestionar suscripciones</li>
+                <li>Comunicarnos con vos sobre tu cuenta</li>
+                <li>Cumplir con obligaciones legales</li>
+              </ul>
+            </section>
 
-      <h2>3. WhatsApp y Meta</h2>
-      <p>Nuestra plataforma utiliza la API de WhatsApp Business de Meta para enviar y recibir mensajes. Los mensajes procesados a través de nuestra plataforma están sujetos a las políticas de privacidad de Meta.</p>
+            <section className="bg-slate-900/60 border border-slate-800 rounded-xl p-6">
+              <h2 className="text-lg font-semibold text-white mb-3">3. WhatsApp y Meta</h2>
+              <p className="text-slate-300 text-sm leading-relaxed">
+                Nuestra plataforma utiliza la API de WhatsApp Business de Meta para enviar y recibir mensajes.
+                Los mensajes procesados están sujetos a las políticas de privacidad de Meta.
+              </p>
+            </section>
 
-      <h2>4. Compartición de datos</h2>
-      <p>No vendemos ni compartimos su información personal con terceros, excepto cuando sea necesario para proveer el servicio (procesadores de pago, proveedores de infraestructura) o cuando lo exija la ley.</p>
+            <section className="bg-slate-900/60 border border-slate-800 rounded-xl p-6">
+              <h2 className="text-lg font-semibold text-white mb-3">4. Compartición de datos</h2>
+              <p className="text-slate-300 text-sm leading-relaxed">
+                No vendemos ni compartimos tu información personal con terceros, excepto cuando sea necesario
+                para proveer el servicio (procesadores de pago, proveedores de infraestructura) o cuando lo exija la ley.
+              </p>
+            </section>
 
-      <h2>5. Seguridad</h2>
-      <p>Implementamos medidas de seguridad técnicas y organizativas para proteger su información contra acceso no autorizado, pérdida o divulgación.</p>
+            <section className="bg-slate-900/60 border border-slate-800 rounded-xl p-6">
+              <h2 className="text-lg font-semibold text-white mb-3">5. Seguridad</h2>
+              <p className="text-slate-300 text-sm leading-relaxed">
+                Implementamos medidas de seguridad técnicas y organizativas para proteger tu información
+                contra acceso no autorizado, pérdida o divulgación.
+              </p>
+            </section>
 
-      <h2>6. Sus derechos</h2>
-      <p>Usted tiene derecho a acceder, rectificar o eliminar su información personal. Para ejercer estos derechos, contáctenos en el correo indicado a continuación.</p>
+            <section className="bg-slate-900/60 border border-slate-800 rounded-xl p-6">
+              <h2 className="text-lg font-semibold text-white mb-3">6. Tus derechos</h2>
+              <p className="text-slate-300 text-sm leading-relaxed">
+                Tenés derecho a acceder, rectificar o eliminar tu información personal.
+                Para ejercer estos derechos, contactanos en <strong className="text-white">gymturones@gmail.com</strong>.
+              </p>
+            </section>
 
-      <h2>7. Retención de datos</h2>
-      <p>Conservamos su información mientras su cuenta esté activa o según sea necesario para proveer los servicios.</p>
+            <section className="bg-slate-900/60 border border-slate-800 rounded-xl p-6">
+              <h2 className="text-lg font-semibold text-white mb-3">7. Contacto</h2>
+              <p className="text-slate-300 text-sm leading-relaxed">
+                Si tenés preguntas sobre esta política, escribinos a <strong className="text-white">gymturones@gmail.com</strong>.
+              </p>
+            </section>
+          </div>
 
-      <h2>8. Contacto</h2>
-      <p>Si tiene preguntas sobre esta política, contáctenos en: <strong>gymturones@gmail.com</strong></p>
-    </div>
-  );
+          <div className="text-center pt-8">
+            <a href="/" className="text-green-400 hover:text-green-300 text-sm font-medium transition-colors">
+              Volver al inicio
+            </a>
+          </div>
+        </div>
+      </div>
+    </>
+  )
 }

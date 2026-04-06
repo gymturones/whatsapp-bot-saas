@@ -12,17 +12,20 @@ export const LoginSchema = z.object({
   password: z.string().min(1, 'Contraseña requerida'),
 });
 
-// Bot
+// Bot — campos alineados con schema Prisma (model Bot)
 export const CreateBotSchema = z.object({
   name: z.string().min(2, 'Nombre mínimo 2 caracteres').max(100),
   description: z.string().optional(),
-  phone_number: z.string().optional().default(''),
-  welcome_message: z.string().min(1),
-  fallback_message: z.string().min(1),
-  is_active: z.boolean().default(true),
+  whatsapp_phone: z.string().min(10, 'Número de WhatsApp requerido').max(15),
+  whatsapp_api_token: z.string().optional(),
+  greeting_message: z.string().optional().default('Hola! 👋 ¿En qué puedo ayudarte?'),
+  fallback_message: z.string().optional().default('Lo siento, no entendí. ¿Podrías reformular tu pregunta?'),
+  auto_reply_enabled: z.boolean().default(true),
+  auto_reply_message: z.string().optional(),
+  ai_model: z.string().default('gpt-3.5-turbo'),
+  ai_temperature: z.number().default(0.7),
   ai_instructions: z.string().optional(),
-  ai_model: z.enum(['gpt-3.5-turbo', 'gpt-4', 'gpt-4o-mini']).default('gpt-3.5-turbo'),
-  ai_temperature: z.union([z.number(), z.string().transform(Number)]).optional().default(0.7),
+  is_active: z.boolean().default(true),
 });
 
 export const UpdateBotSchema = CreateBotSchema.partial();
@@ -40,9 +43,10 @@ export const UpdateBotResponseSchema = CreateBotResponseSchema.partial();
 
 // Message
 export const SendMessageSchema = z.object({
-  bot_id: z.string().uuid(),
-  phone_number: z.string().regex(/^\d{10,15}$/),
-  message: z.string().min(1),
+  bot_id: z.string(),
+  conversation_id: z.string().optional(),
+  recipient_phone: z.string().min(10, 'Número de teléfono requerido'),
+  message: z.string().min(1, 'Mensaje requerido'),
 });
 
 // Conversation

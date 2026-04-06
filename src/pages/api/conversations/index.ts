@@ -16,31 +16,41 @@ async function handleGetConversations(
 
     const { botId } = req.query;
 
-    if (!botId || typeof botId !== 'string') {
-      return sendError(res, new Error('Bot ID requerido'), 400);
-    }
-
-    // Verificar que el bot pertenece al usuario
-    const bot = await prisma.bot.findUnique({ where: { id: botId } });
-    if (!bot || bot.user_id !== userId) {
-      return sendError(res, new Error('Bot no encontrado'), 404);
-    }
-
     const { page, limit } = getPaginationParams(req.query);
     const offset = calculateOffset(page, limit);
 
+    // Determinar filtro de bot_id
+    let botFilter: { bot_id: string } | { bot_id: { in: string[] } };
+
+    if (botId && typeof botId === 'string') {
+      // Verificar que el bot pertenece al usuario
+      const bot = await prisma.bot.findUnique({ where: { id: botId } });
+      if (!bot || bot.user_id !== userId) {
+        return sendError(res, new Error('Bot no encontrado'), 404);
+      }
+      botFilter = { bot_id: botId };
+    } else {
+      // Sin botId: traer todas las conversaciones del usuario
+      const userBots = await prisma.bot.findMany({
+        where: { user_id: userId },
+        select: { id: true },
+      });
+      botFilter = { bot_id: { in: userBots.map((b) => b.id) } };
+    }
+
     const [conversations, total] = await Promise.all([
       prisma.conversation.findMany({
-        where: { bot_id: botId },
+        where: botFilter,
         skip: offset,
         take: limit,
         orderBy: { updated_at: 'desc' },
         include: {
           messages: { orderBy: { created_at: 'desc' }, take: 1 },
           _count: { select: { messages: true } },
+          bot: { select: { name: true } },
         },
       }),
-      prisma.conversation.count({ where: { bot_id: botId } }),
+      prisma.conversation.count({ where: botFilter }),
     ]);
 
     const formatted = conversations.map((conv) => ({

@@ -69,6 +69,8 @@ async function handlePut(req: NextApiRequest, res: NextApiResponse, id: string) 
     if (validated.ai_instructions !== undefined)  data.ai_instructions = validated.ai_instructions;
     if (validated.ai_model !== undefined)         data.ai_model = validated.ai_model;
     if (validated.ai_temperature !== undefined)   data.ai_temperature = typeof validated.ai_temperature === 'number' ? validated.ai_temperature : 0.7;
+    // Handle auto_reply_enabled directly from body (not in schema validation)
+    if (req.body.auto_reply_enabled !== undefined) data.auto_reply_enabled = Boolean(req.body.auto_reply_enabled);
 
     const bot = await prisma.bot.update({
       where: { id },

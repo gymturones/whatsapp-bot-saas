@@ -5,7 +5,6 @@ import Head from 'next/head'
 import Link from 'next/link'
 import { useState } from 'react'
 import { useRouter } from 'next/router'
-import { getSupabaseBrowserClient } from '@/lib/supabase'
 
 const Signup: NextPage = () => {
   const router = useRouter()
@@ -20,6 +19,7 @@ const Signup: NextPage = () => {
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
+    setSuccess('')
 
     if (password !== confirmPassword) {
       setError('Las contraseñas no coinciden')
@@ -34,35 +34,35 @@ const Signup: NextPage = () => {
     setLoading(true)
 
     try {
-      const supabase = getSupabaseBrowserClient()
-
-      const { data, error: authError } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          data: { name },
-          emailRedirectTo: `${window.location.origin}/auth/callback`,
-        },
+      // Use our API endpoint that creates both Supabase Auth + Prisma User
+      const res = await fetch('/api/auth/signup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password, name }),
       })
 
-      if (authError) {
-        setError(authError.message)
+      const data = await res.json()
+
+      if (!res.ok) {
+        setError(data.error || 'Error al crear la cuenta')
         return
       }
 
-      // Si la sesión ya existe, el usuario está confirmado automáticamente (Supabase sin confirmación de email)
-      if (data.session) {
+      // If session returned, save token and go to onboarding
+      if (data.session?.access_token) {
         localStorage.setItem('sb_access_token', data.session.access_token)
-        router.push('/dashboard')
+        localStorage.setItem('user_email', data.user?.email || email)
+        router.push('/dashboard/onboarding')
         return
       }
 
-      setSuccess('¡Cuenta creada! Podés iniciar sesión ahora.')
+      // No immediate session — redirect to login
+      setSuccess('¡Cuenta creada! Iniciá sesión con tus datos.')
       setTimeout(() => {
         router.push('/auth/login')
       }, 2000)
     } catch (err: any) {
-      setError(err.message || 'Error registering')
+      setError(err.message || 'Error al crear la cuenta')
     } finally {
       setLoading(false)
     }
@@ -71,20 +71,28 @@ const Signup: NextPage = () => {
   return (
     <>
       <Head>
-        <title>Sign Up - WhatsApp Bot SaaS</title>
+        <title>Registrate - BotPyme</title>
       </Head>
 
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center px-6">
         <div className="w-full max-w-md">
           {/* Logo */}
           <div className="text-center mb-8">
-            <div className="w-12 h-12 bg-blue-600 rounded-lg mx-auto mb-4"></div>
-            <h1 className="text-2xl font-bold text-gray-900">WhatsApp Bot</h1>
-            <p className="text-gray-600 mt-2">Crea tu cuenta gratis</p>
+            <div className="w-14 h-14 bg-green-500 rounded-2xl mx-auto mb-4 flex items-center justify-center shadow-lg shadow-green-500/30">
+              <svg className="w-9 h-9" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <rect x="2" y="4" width="24" height="17" rx="5" fill="white"/>
+                <circle cx="10" cy="12" r="2.2" fill="#22c55e"/>
+                <circle cx="18" cy="12" r="2.2" fill="#22c55e"/>
+                <path d="M9 17.5 Q14 20.5 19 17.5" stroke="#22c55e" strokeWidth="1.5" fill="none" strokeLinecap="round"/>
+                <path d="M18 21 L22 26 L14 21" fill="white"/>
+              </svg>
+            </div>
+            <h1 className="text-2xl font-bold text-gray-900">BotPyme</h1>
+            <p className="text-gray-600 mt-2">Creá tu cuenta gratis</p>
           </div>
 
           {/* Form */}
-          <div className="bg-white rounded-lg shadow-lg p-8">
+          <div className="bg-white rounded-2xl shadow-xl p-8">
             {success && (
               <div className="mb-4 p-4 bg-green-50 border border-green-200 rounded-lg">
                 <p className="text-sm text-green-700">{success}</p>
@@ -105,7 +113,7 @@ const Signup: NextPage = () => {
                   type="text"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-600 focus:border-transparent"
+                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition"
                   placeholder="Tu nombre"
                   required
                 />
@@ -119,7 +127,7 @@ const Signup: NextPage = () => {
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-600 focus:border-transparent"
+                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition"
                   placeholder="tu@email.com"
                   required
                 />
@@ -133,9 +141,10 @@ const Signup: NextPage = () => {
                   type="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-600 focus:border-transparent"
-                  placeholder="••••••••"
+                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition"
+                  placeholder="Mínimo 6 caracteres"
                   required
+                  minLength={6}
                 />
               </div>
 
@@ -147,8 +156,8 @@ const Signup: NextPage = () => {
                   type="password"
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-600 focus:border-transparent"
-                  placeholder="••••••••"
+                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition"
+                  placeholder="Repetí tu contraseña"
                   required
                 />
               </div>
@@ -156,27 +165,25 @@ const Signup: NextPage = () => {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition font-medium disabled:opacity-50"
+                className="w-full bg-green-600 text-white py-3 rounded-lg hover:bg-green-700 transition font-medium disabled:opacity-50"
               >
-                {loading ? 'Registrando...' : 'Crear cuenta'}
+                {loading ? 'Creando cuenta...' : 'Crear cuenta gratis'}
               </button>
             </form>
 
             <div className="mt-6 text-center">
               <p className="text-gray-600">
-                ¿Ya tienes cuenta?{' '}
-                <Link href="/auth/login">
-                  <a className="text-blue-600 hover:text-blue-700 font-medium">
-                    Inicia sesión
-                  </a>
+                ¿Ya tenés cuenta?{' '}
+                <Link href="/auth/login" className="text-green-600 hover:text-green-700 font-medium">
+                  Iniciá sesión
                 </Link>
               </p>
             </div>
           </div>
 
           {/* Footer */}
-          <p className="text-center text-gray-600 text-sm mt-8">
-            © 2025 WhatsApp Bot SaaS
+          <p className="text-center text-gray-400 text-sm mt-8">
+            © 2026 BotPyme
           </p>
         </div>
       </div>

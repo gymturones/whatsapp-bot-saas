@@ -26,11 +26,13 @@ async function handleSendMessage(
       return sendError(res, new Error('Bot no encontrado'), 404);
     }
 
+    const recipientPhone = validated.recipient_phone;
+
     // Obtener o crear conversación
     let conversation = await prisma.conversation.findFirst({
       where: {
         bot_id: validated.bot_id,
-        whatsapp_contact: validated.phone_number,
+        whatsapp_contact: recipientPhone,
       },
     });
 
@@ -39,13 +41,13 @@ async function handleSendMessage(
         data: {
           bot_id: validated.bot_id,
           user_id: bot.user_id,
-          whatsapp_contact: validated.phone_number,
+          whatsapp_contact: recipientPhone,
         },
       });
     }
 
     // Enviar mensaje via WhatsApp
-    await sendWhatsAppMessage(validated.phone_number, validated.message);
+    await sendWhatsAppMessage(recipientPhone, validated.message);
 
     // Guardar en DB
     await prisma.message.create({

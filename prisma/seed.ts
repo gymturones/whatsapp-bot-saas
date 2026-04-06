@@ -1,4 +1,4 @@
-// prisma/seed.ts
+﻿// prisma/seed.ts
 
 import { PrismaClient } from '@prisma/client'
 
@@ -23,7 +23,7 @@ async function main() {
     {
       plan_id: 'starter',
       plan_name: 'Starter',
-      price: 1999,
+      price: 10000,
       currency: 'ARS',
       features: [
         '3 bots',
@@ -39,7 +39,7 @@ async function main() {
     {
       plan_id: 'pro',
       plan_name: 'Pro',
-      price: 4999,
+      price: 25000,
       currency: 'ARS',
       features: [
         '10 bots',
@@ -55,7 +55,7 @@ async function main() {
     {
       plan_id: 'business',
       plan_name: 'Business',
-      price: 9999,
+      price: 35000,
       currency: 'ARS',
       features: [
         '50 bots',
