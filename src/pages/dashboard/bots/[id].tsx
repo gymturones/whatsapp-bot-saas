@@ -39,9 +39,6 @@ export default function BotDetailPage() {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data: responsesData, loading: responsesLoading } = useFetch<any>(responsesUrl);
   const responses: BotResponse[] = responsesData?.data?.responses || responsesData?.responses || [];
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data: responsesData, loading: responsesLoading } = useFetch<any>(responsesUrl);
-  const responses: BotResponse[] = responsesData?.data?.responses || responsesData?.responses || [];
 
   const triggerRefresh = () => setRefreshKey((k) => k + 1);
 
