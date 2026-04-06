@@ -44,7 +44,7 @@ const Home: NextPage = () => {
         <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
       </Head>
 
-      <div className="min-h-screen bg-slate-950 text-white overflow-x-hidden">
+      <div className="min-h-screen bg-slate-950 text-white overflow-x-clip">
 
         {/* ── NAVBAR ── */}
         <nav className="fixed top-0 left-0 right-0 z-50 bg-slate-950/80 backdrop-blur-xl border-b border-slate-800/40">
@@ -141,7 +141,7 @@ const Home: NextPage = () => {
                 {/* Headline */}
                 <div className="mb-8">
                   <p className="text-2xl font-black text-slate-400 tracking-tight mb-2">AUTOMATIZÁ TU</p>
-                  <h1 className="text-6xl md:text-7xl lg:text-8xl font-black leading-none tracking-tighter mb-4">
+                  <h1 className="text-6xl md:text-7xl lg:text-8xl font-black leading-none tracking-tighter mb-4 pr-4">
                     <span className="bg-gradient-to-r from-green-400 via-green-500 to-emerald-400 bg-clip-text text-transparent">
                       WHATSAPP
                     </span>
