@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="none">
+  <rect width="32" height="32" rx="8" fill="#22c55e"/>
+  <!-- Casco de obra blanco -->
+  <path d="M8 9 Q8 3.5 16 3.5 Q24 3.5 24 9 Z" fill="white"/>
+  <rect x="5.5" y="8" width="21" height="2.5" rx="1.2" fill="white"/>
+  <!-- Cara del bot -->
+  <rect x="4" y="10.5" width="24" height="15.5" rx="5" fill="white"/>
+  <circle cx="12" cy="17" r="2.5" fill="#22c55e"/>
+  <circle cx="20" cy="17" r="2.5" fill="#22c55e"/>
+  <path d="M11 21.5Q16 24.5 21 21.5" stroke="#22c55e" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+  <path d="M20 25L24 30L16 25" fill="white"/>
+</svg>
