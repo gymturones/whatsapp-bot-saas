@@ -7,12 +7,13 @@ import { CreateBotSchema, type CreateBotInput } from '@/validators/schemas';
 export default function BotFormPage() {
   const router = useRouter();
   const { id } = router.query;
-  const isEdit = !!id;
+  const isEdit = !!id && router.isReady;
+  const botId = typeof id === 'string' ? id : '';
 
-  const { data: bot } = useFetch(isEdit ? `/api/bots/${id}` : null);
+  const { data: bot } = useFetch(isEdit ? `/api/bots/${botId}` : null);
 
   const { mutate, loading, error } = useMutation(
-    isEdit ? `/api/bots/${id}` : '/api/bots',
+    isEdit ? `/api/bots/${botId}` : '/api/bots',
     {
       method: isEdit ? 'PUT' : 'POST',
       onSuccess: () => {
@@ -71,6 +72,10 @@ export default function BotFormPage() {
       });
     }
   }, [bot]);
+
+  if (!router.isReady) return null;
+
+  if (!router.isReady) return null;
 
   return (
     <div className="max-w-2xl space-y-6">

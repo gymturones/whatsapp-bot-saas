@@ -1,0 +1,16 @@
+// Logo: Casco de ingeniería con microchip/chat bubbles
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="none">
+  <rect width="32" height="32" rx="8" fill="#1a1a1a"/>
+  <!-- Casco de obra estilizado -->
+  <path d="M6 18 L6 13 Q6 8 16 7 Q26 8 26 13 L26 18 Z" fill="#ef4444"/>
+  <!-- Visera del casco -->
+  <rect x="5" y="17" width="22" height="3" rx="1" fill="#dc2626"/>
+  <!-- Rayas del casco -->
+  <line x1="16" y1="8" x2="16" y2="16" stroke="#1a1a1a" stroke-width="1.2" opacity="0.3"/>
+  <!-- Chat bubble -->
+  <rect x="17" y="21" width="10" height="7" rx="2" fill="#e5e7eb"/>
+  <polygon points="19,28 21,31 23,28" fill="#e5e7eb"/>
+  <!-- Dots in bubble -->
+  <circle cx="20.5" cy="24.5" r="0.8" fill="#1a1a1a"/>
+  <circle cx="23.5" cy="24.5" r="0.8" fill="#1a1a1a"/>
+</svg>
