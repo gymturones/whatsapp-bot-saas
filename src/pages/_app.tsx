@@ -30,7 +30,7 @@ function MyApp({ Component, pageProps }: AppProps) {
   if (!mounted) {
     return (
       <ErrorBoundary>
-        <div className="flex items-center justify-center h-screen bg-gray-50">
+        <div className="flex items-center justify-center h-screen bg-slate-950">
           <Spinner size="lg" />
         </div>
       </ErrorBoundary>

@@ -2,7 +2,7 @@ import React from 'react';
 import { useRouter } from 'next/router';
 import { useFetch } from '@/hooks';
 import { Card, Button, Spinner } from '@/components/UI';
-import { ConversationList } from '@/components/DomainComponents';
+import { ConversationItem } from '@/components/DomainComponents';
 
 export default function ConversationsPage() {
   const router = useRouter();
@@ -94,11 +94,24 @@ function BotConversations({
         </div>
       </div>
 
-      <ConversationList
-        conversations={convData?.conversations || []}
-        loading={loading}
-        onSelectConversation={onSelectConversation}
-      />
+      {loading ? (
+        <div className="flex justify-center py-12"><Spinner size="lg" /></div>
+      ) : convData?.conversations?.length === 0 ? (
+        <div className="text-center py-12">
+          <p className="text-slate-400">No hay conversaciones todavia</p>
+          <p className="text-slate-500 text-sm mt-1">Las conversaciones aparecen cuando tu bot recibe mensajes</p>
+        </div>
+      ) : (
+        <div className="space-y-2">
+          {(convData?.conversations || []).map((conv: any) => (
+            <ConversationItem
+              key={conv.id}
+              conversation={conv}
+              onClick={() => onSelectConversation(conv.id)}
+            />
+          ))}
+        </div>
+      )}
     </Card>
   );
 }
