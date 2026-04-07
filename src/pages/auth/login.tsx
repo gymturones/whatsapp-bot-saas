@@ -72,14 +72,8 @@ const Login: NextPage = () => {
         <div className="w-full max-w-md">
           {/* Logo */}
           <div className="text-center mb-8">
-            <div className="w-14 h-14 bg-green-500 rounded-2xl mx-auto mb-4 flex items-center justify-center shadow-lg shadow-green-500/30">
-              <svg className="w-9 h-9" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <rect x="2" y="4" width="24" height="17" rx="5" fill="white"/>
-                <circle cx="10" cy="12" r="2.2" fill="#22c55e"/>
-                <circle cx="18" cy="12" r="2.2" fill="#22c55e"/>
-                <path d="M9 17.5 Q14 20.5 19 17.5" stroke="#22c55e" strokeWidth="1.5" fill="none" strokeLinecap="round"/>
-                <path d="M18 21 L22 26 L14 21" fill="white"/>
-              </svg>
+            <div className="w-14 h-14 rounded-2xl mx-auto mb-4 flex items-center justify-center shadow-lg shadow-green-500/30">
+              <img src="/logo-casco.svg" alt="BotPyme" className="w-9 h-9" />
             </div>
             <h1 className="text-2xl font-bold text-gray-900">BotPyme</h1>
             <p className="text-gray-600 mt-2">Iniciá sesión en tu cuenta</p>

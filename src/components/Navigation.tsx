@@ -4,20 +4,7 @@ import Link from 'next/link';
 
 // Logo SVG custom (bot + chat bubble, diferente al de WhatsApp)
 const BotLogo = ({ className = 'w-6 h-6' }: { className?: string }) => (
-  <svg className={className} viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
-    {/* Antena */}
-    <line x1="14" y1="4" x2="14" y2="1" stroke="white" strokeWidth="1.5" strokeLinecap="round"/>
-    <circle cx="14" cy="0.8" r="1.2" fill="white"/>
-    {/* Cuerpo del chat bubble - forma rectangular redondeada */}
-    <rect x="2" y="4" width="24" height="17" rx="5" fill="white"/>
-    {/* Ojos del bot */}
-    <circle cx="10" cy="12" r="2.2" fill="#22c55e"/>
-    <circle cx="18" cy="12" r="2.2" fill="#22c55e"/>
-    {/* Boca / sonrisa */}
-    <path d="M9 17.5 Q14 20.5 19 17.5" stroke="#22c55e" strokeWidth="1.5" fill="none" strokeLinecap="round"/>
-    {/* Tail del chat (derecha-abajo, diferente a WA) */}
-    <path d="M18 21 L22 26 L14 21" fill="white"/>
-  </svg>
+  <img src="/logo-casco.svg" alt="BotPyme" className={className} />
 );
 
 interface NavItem {

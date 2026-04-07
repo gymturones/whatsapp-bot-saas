@@ -1,91 +1,74 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
-import { useForm, useMutation, useFetch, useAuth } from '@/hooks';
-import { Card, Button, Input, Alert, Spinner } from '@/components/UI';
+import { useAuth, useFetch, useMutation } from '@/hooks';
+import { Card, Button, Input, Spinner } from '@/components/UI';
 
 export default function SettingsPage() {
   const router = useRouter();
-  const { loading: authLoading, user, logout } = useAuth();
+  const { loading: authLoading, logout } = useAuth();
   const [activeTab, setActiveTab] = useState('profile');
-  const [showApiKey, setShowApiKey] = useState(false);
-  const [apiKey, setApiKey] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
 
   // Fetch user profile
-  const { data: profileData, loading: profileLoading } = useFetch('/api/auth/me');
+  const { data: profileData, loading: profileLoading, refetch } = useFetch<any>('/api/users/profile');
+  const profile = profileData?.data || profileData;
 
-  // Update profile
-  const { mutate: updateProfile, loading: updating } = useMutation(
-    '/api/users/profile',
-    {
-      method: 'PUT',
-      onSuccess: () => {
-        setSuccessMsg('Perfil actualizado correctamente');
-        setTimeout(() => setSuccessMsg(''), 3000);
-      },
-    }
-  );
-
-  // Generate API Key
-  const { mutate: generateApiKey, loading: generating } = useMutation(
-    '/api/users/api-keys',
-    {
-      method: 'POST',
-      onSuccess: (data: any) => {
-        setApiKey(data?.data?.key || data?.key || 'Generada (verificar en API)');
-        setShowApiKey(true);
-      },
-    }
-  );
-
-  const changePasswordForm = useForm({
-    initialValues: {
-      current_password: '',
-      new_password: '',
-      confirm_password: '',
-    },
-    onSubmit: async (values) => {
-      if (values.new_password !== values.confirm_password) {
-        alert('Las contraseñas no coinciden');
-        return;
-      }
-      try {
-        await updateProfile({
-          current_password: values.current_password,
-          new_password: values.new_password,
-        });
-      } catch (e) {
-        console.error(e);
-      }
+  // Update profile mutation
+  const { mutate: updateProfile, loading: updating } = useMutation('/api/users/profile', {
+    method: 'PUT',
+    onSuccess: () => {
+      setSuccessMsg('Perfil actualizado correctamente');
+      setTimeout(() => setSuccessMsg(''), 3000);
+      refetch?.();
     },
   });
 
-  const profileForm = useForm({
-    initialValues: {
-      email: user?.email || profileData?.email || '',
-      full_name: user?.user_metadata?.name || profileData?.name || '',
-      company_name: profileData?.company_name || '',
-    },
-    onSubmit: (values) => updateProfile(values),
-  });
+  const [name, setName] = useState('');
+  const [company, setCompany] = useState('');
+  const [passwords, setPasswords] = useState({ current: '', newPass: '', confirm: '' });
+  const [pwError, setPwError] = useState('');
 
-  // Sync form when user data loads
   useEffect(() => {
-    if (user || profileData) {
-      profileForm.setValues({
-        email: user?.email || profileData?.email || '',
-        full_name: user?.user_metadata?.name || profileData?.name || '',
-        company_name: profileData?.company_name || '',
-      });
+    if (profile) {
+      setName(profile.name || '');
+      setCompany(profile.company_name || '');
     }
-  }, [user, profileData]);
+  }, [profile]);
+
+  const handleSaveProfile = async (e: React.FormEvent) => {
+    e.preventDefault();
+    await updateProfile({ full_name: name, company_name: company });
+  };
+
+  const handleChangePassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setPwError('');
+    if (passwords.newPass !== passwords.confirm) {
+      setPwError('Las contraseñas no coinciden');
+      return;
+    }
+    if (passwords.newPass.length < 6) {
+      setPwError('Mínimo 6 caracteres');
+      return;
+    }
+    try {
+      const res = await fetch('/api/auth/reset-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ new_password: passwords.newPass }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Error');
+      setSuccessMsg('Contraseña actualizada');
+      setPasswords({ current: '', newPass: '', confirm: '' });
+      setTimeout(() => setSuccessMsg(''), 3000);
+    } catch (err: any) {
+      setPwError(err.message || 'Error al cambiar contraseña');
+    }
+  };
 
   const handleLogout = async () => {
-    try {
-      await fetch('/api/auth/logout', { method: 'POST' });
-    } catch (e) {
-      // ignore
-    }
+    await fetch('/api/auth/logout', { method: 'POST' });
     await logout();
   };
 
@@ -100,7 +83,7 @@ export default function SettingsPage() {
   return (
     <div className="max-w-4xl space-y-6">
       {successMsg && (
-        <div className="p-4 bg-green-50 border border-green-200 rounded-lg text-green-700 text-sm">
+        <div className="p-4 bg-green-500/15 border border-green-500/30 rounded-xl text-green-400 text-sm">
           {successMsg}
         </div>
       )}
@@ -110,21 +93,16 @@ export default function SettingsPage() {
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-2 border-b border-slate-700">
-        {['profile', 'security', 'api', 'billing'].map((tab) => (
+      <div className="flex gap-1 bg-slate-900 rounded-xl p-1 border border-slate-800 w-fit">
+        {['profile', 'security', 'billing'].map((tab) => (
           <button
             key={tab}
             onClick={() => setActiveTab(tab)}
-            className={`px-4 py-2 font-medium transition-colors text-sm ${
-              activeTab === tab
-                ? 'border-b-2 border-green-500 text-green-400'
-                : 'text-slate-400 hover:text-white'
+            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+              activeTab === tab ? 'bg-slate-800 text-white' : 'text-slate-400 hover:text-white'
             }`}
           >
-            {tab === 'profile' && 'Perfil'}
-            {tab === 'security' && 'Seguridad'}
-            {tab === 'api' && 'API'}
-            {tab === 'billing' && 'Facturación'}
+            {tab === 'profile' ? 'Perfil' : tab === 'security' ? 'Seguridad' : 'Facturación'}
           </button>
         ))}
       </div>
@@ -133,27 +111,22 @@ export default function SettingsPage() {
       {activeTab === 'profile' && (
         <Card>
           <h2 className="text-xl font-semibold text-white mb-6">Información de Perfil</h2>
-          <form onSubmit={profileForm.handleSubmit} className="space-y-4">
+          <form onSubmit={handleSaveProfile} className="space-y-4">
             <Input
               label="Email"
-              name="email"
-              type="email"
-              value={profileForm.values.email}
-              onChange={profileForm.handleChange}
+              value={profile?.email || ''}
               disabled
               helperText="El email no se puede cambiar"
             />
             <Input
               label="Nombre Completo"
-              name="full_name"
-              value={profileForm.values.full_name}
-              onChange={profileForm.handleChange}
+              value={name}
+              onChange={(e) => setName(e.target.value)}
             />
             <Input
               label="Empresa"
-              name="company_name"
-              value={profileForm.values.company_name}
-              onChange={profileForm.handleChange}
+              value={company}
+              onChange={(e) => setCompany(e.target.value)}
             />
             <Button type="submit" loading={updating}>
               Guardar Cambios
@@ -162,9 +135,7 @@ export default function SettingsPage() {
 
           <div className="border-t border-slate-700 mt-8 pt-6">
             <h3 className="text-lg font-semibold text-white mb-2">Cerrar sesión</h3>
-            <p className="text-sm text-slate-400 mb-4">
-              Cerrá la sesión en este dispositivo.
-            </p>
+            <p className="text-sm text-slate-400 mb-4">Cerrá la sesión en este dispositivo.</p>
             <Button variant="danger" onClick={handleLogout}>
               Cerrar Sesión
             </Button>
@@ -176,62 +147,30 @@ export default function SettingsPage() {
       {activeTab === 'security' && (
         <Card>
           <h2 className="text-xl font-semibold text-white mb-6">Cambiar Contraseña</h2>
-          <form onSubmit={changePasswordForm.handleSubmit} className="space-y-4">
-            <Input
-              label="Contraseña Actual"
-              name="current_password"
-              type="password"
-              value={changePasswordForm.values.current_password}
-              onChange={changePasswordForm.handleChange}
-            />
+          {pwError && (
+            <div className="mb-4 p-3 bg-red-500/15 border border-red-500/30 rounded-lg text-red-400 text-sm">
+              {pwError}
+            </div>
+          )}
+          <form onSubmit={handleChangePassword} className="space-y-4">
             <Input
               label="Nueva Contraseña"
-              name="new_password"
               type="password"
-              value={changePasswordForm.values.new_password}
-              onChange={changePasswordForm.handleChange}
+              value={passwords.newPass}
+              onChange={(e) => setPasswords({ ...passwords, newPass: e.target.value })}
               helperText="Mínimo 6 caracteres"
             />
             <Input
               label="Confirmar Nueva Contraseña"
-              name="confirm_password"
               type="password"
-              value={changePasswordForm.values.confirm_password}
-              onChange={changePasswordForm.handleChange}
+              value={passwords.confirm}
+              onChange={(e) => setPasswords({ ...passwords, confirm: e.target.value })}
             />
-            <Button type="submit" loading={updating}>
+            <Button type="submit">
               Cambiar Contraseña
             </Button>
           </form>
         </Card>
-      )}
-
-      {/* API Tab */}
-      {activeTab === 'api' && (
-        <div className="space-y-6">
-          <Card>
-            <h2 className="text-xl font-semibold text-white mb-4">Claves API</h2>
-            <p className="text-slate-400 mb-4">
-              Las claves API te permiten acceder a la API de BotPyme
-              programáticamente.
-            </p>
-            <Button onClick={() => generateApiKey()} loading={generating}>
-              + Generar Nueva Clave
-            </Button>
-
-            {showApiKey && apiKey && (
-              <div className="mt-4 p-4 bg-yellow-500/10 border border-yellow-500/30 rounded-xl">
-                <p className="font-semibold text-yellow-300 text-sm">Copiá tu clave API ahora</p>
-                <p className="text-xs text-yellow-400/70 mt-1">
-                  No vas a poder verla nuevamente por razones de seguridad.
-                </p>
-                <code className="block bg-slate-900 text-green-400 p-3 rounded mt-2 text-sm break-all font-mono">
-                  {apiKey}
-                </code>
-              </div>
-            )}
-          </Card>
-        </div>
       )}
 
       {/* Billing Tab */}
@@ -241,19 +180,17 @@ export default function SettingsPage() {
           <div className="space-y-4">
             <div className="p-4 bg-blue-500/10 rounded-xl border border-blue-500/20">
               <p className="font-semibold text-blue-300">
-                Plan Actual:{' '}
-                {profileData?.subscription_plan
-                  ? profileData.subscription_plan.charAt(0).toUpperCase() +
-                    profileData.subscription_plan.slice(1)
-                  : 'Free'}
+                Plan Actual: {(profile?.subscription_plan || 'free').charAt(0).toUpperCase() + (profile?.subscription_plan || 'free').slice(1)}
               </p>
               <p className="text-sm text-slate-400 mt-1">
-                Estás en el plan gratuito. Actualizá para acceder a más bots, mensajes y funciones de IA.
+                {(profile?.subscription_plan || 'free') === 'free'
+                  ? 'Estás en el plan gratuito. Actualizá para acceder a más bots, mensajes y funciones de IA.'
+                  : 'Tenés acceso a todas las funciones de tu plan.'}
               </p>
             </div>
-            <Button onClick={() => router.push('/pricing')}>
-              Ver Planes
-            </Button>
+            {(profile?.subscription_plan || 'free') === 'free' && (
+              <Button onClick={() => router.push('/pricing')}>Ver Planes</Button>
+            )}
           </div>
         </Card>
       )}

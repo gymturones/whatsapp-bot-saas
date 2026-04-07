@@ -70,13 +70,7 @@ const ResetPassword: NextPage = () => {
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <div className="w-12 h-12 rounded-2xl bg-green-500 flex items-center justify-center mx-auto mb-4 shadow-lg shadow-green-500/25">
-            <svg className="w-7 h-7" viewBox="0 0 28 28" fill="none">
-              <rect x="2" y="4" width="24" height="17" rx="5" fill="white"/>
-              <circle cx="10" cy="12" r="2.2" fill="#22c55e"/>
-              <circle cx="18" cy="12" r="2.2" fill="#22c55e"/>
-              <path d="M9 17.5Q14 20.5 19 17.5" stroke="#22c55e" strokeWidth="1.5" fill="none" strokeLinecap="round"/>
-              <path d="M18 21L22 26L14 21" fill="white"/>
-            </svg>
+            <img src="/logo-casco.svg" alt="BotPyme" className="w-7 h-7" />
           </div>
           <h1 className="text-2xl font-bold text-white">Nueva contraseña</h1>
         </div>

@@ -52,15 +52,7 @@ const Home: NextPage = () => {
             {/* Logo */}
             <div className="flex items-center gap-3">
               <div className="w-9 h-9 rounded-xl bg-green-500 flex items-center justify-center shadow-lg shadow-green-500/30">
-                <svg className="w-5 h-5 text-white" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <line x1="14" y1="4" x2="14" y2="1" stroke="white" strokeWidth="1.5" strokeLinecap="round"/>
-                  <circle cx="14" cy="0.8" r="1.2" fill="white"/>
-                  <rect x="2" y="4" width="24" height="17" rx="5" fill="white"/>
-                  <circle cx="10" cy="12" r="2.2" fill="#22c55e"/>
-                  <circle cx="18" cy="12" r="2.2" fill="#22c55e"/>
-                  <path d="M9 17.5 Q14 20.5 19 17.5" stroke="#22c55e" strokeWidth="1.5" fill="none" strokeLinecap="round"/>
-                  <path d="M18 21 L22 26 L14 21" fill="white"/>
-                </svg>
+                <img src="/logo-casco.svg" alt="BotPyme" className="w-5 h-5" />
               </div>
               <span className="text-xl font-black tracking-tight">BotPyme</span>
             </div>
@@ -141,7 +133,7 @@ const Home: NextPage = () => {
                 {/* Headline */}
                 <div className="mb-8">
                   <p className="text-2xl font-black text-slate-400 tracking-tight mb-2">AUTOMATIZÁ TU</p>
-                  <h1 className="text-6xl md:text-7xl lg:text-8xl font-black leading-none tracking-tighter mb-4 pr-4">
+                  <h1 className="text-6xl md:text-7xl lg:text-8xl font-black leading-none tracking-tight mb-4">
                     <span className="bg-gradient-to-r from-green-400 via-green-500 to-emerald-400 bg-clip-text text-transparent">
                       WHATSAPP
                     </span>
@@ -552,15 +544,7 @@ const Home: NextPage = () => {
               {/* Logo */}
               <div className="flex items-center gap-2">
                 <div className="w-8 h-8 rounded-lg bg-green-500 flex items-center justify-center shadow-lg shadow-green-500/25">
-                  <svg className="w-4 h-4 text-white" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <line x1="14" y1="4" x2="14" y2="1" stroke="white" strokeWidth="1.5" strokeLinecap="round"/>
-                    <circle cx="14" cy="0.8" r="1.2" fill="white"/>
-                    <rect x="2" y="4" width="24" height="17" rx="5" fill="white"/>
-                    <circle cx="10" cy="12" r="2.2" fill="#22c55e"/>
-                    <circle cx="18" cy="12" r="2.2" fill="#22c55e"/>
-                    <path d="M9 17.5 Q14 20.5 19 17.5" stroke="#22c55e" strokeWidth="1.5" fill="none" strokeLinecap="round"/>
-                    <path d="M18 21 L22 26 L14 21" fill="white"/>
-                  </svg>
+                  <img src="/logo-casco.svg" alt="BotPyme" className="w-4 h-4" />
                 </div>
                 <span className="text-white font-extrabold text-lg">BotPyme</span>
               </div>
