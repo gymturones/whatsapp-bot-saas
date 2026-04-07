@@ -49,10 +49,12 @@ function StatCard({ label, value, color = 'white' }: { label: string; value: str
 }
 
 function OverviewTab() {
-  const { data, loading } = useFetch<any>('/api/admin/stats')
+  const { data, loading, error } = useFetch<any>('/api/admin/stats')
 
   if (loading) return <div className="flex justify-center py-12"><Spinner size="lg" /></div>
-  const d = data?.data || data
+  if (error) return <div className="text-center py-12 text-red-400"><p>Error cargando estadísticas:</p><p className="text-sm mt-1 text-slate-500">{error}</p></div>
+
+  const d = data || {}
 
   return (
     <div className="space-y-6">
@@ -119,12 +121,14 @@ function OverviewTab() {
 function UsersTab() {
   const router = useRouter()
   const page = Number(router.query.page) || 1
-  const { data, loading } = useFetch<any>(`/api/admin/users?page=${page}&limit=20`)
+  const { data, loading, error } = useFetch<any>(`/api/admin/users?page=${page}&limit=20`)
 
   if (loading) return <div className="flex justify-center py-12"><Spinner size="lg" /></div>
-  const d = data?.data || data
-  const users = d?.users || []
-  const pagination = d?.pagination || {}
+  if (error) return <div className="text-center py-12 text-red-400"><p>Error cargando usuarios:</p><p className="text-sm mt-1 text-slate-500">{error}</p></div>
+
+  const d = data || {}
+  const users = d.users || []
+  const pagination = d.pagination || {}
 
   return (
     <Card>
@@ -172,12 +176,14 @@ function UsersTab() {
 function BotsTab() {
   const router = useRouter()
   const page = Number(router.query.page) || 1
-  const { data, loading } = useFetch<any>(`/api/admin/bots?page=${page}&limit=20`)
+  const { data, loading, error } = useFetch<any>(`/api/admin/bots?page=${page}&limit=20`)
 
   if (loading) return <div className="flex justify-center py-12"><Spinner size="lg" /></div>
-  const d = data?.data || data
-  const bots = d?.bots || []
-  const pagination = d?.pagination || {}
+  if (error) return <div className="text-center py-12 text-red-400"><p>Error cargando bots:</p><p className="text-sm mt-1 text-slate-500">{error}</p></div>
+
+  const d = data || {}
+  const bots = d.bots || []
+  const pagination = d.pagination || {}
 
   return (
     <Card>

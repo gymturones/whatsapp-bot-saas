@@ -34,7 +34,7 @@ export async function requireAuth(
         const existing = await prisma.user.findUnique({ where: { id: user.id } });
         if (!existing) {
           // Verificar si existe por email (registro anterior con otro sistema)
-          const byEmail = await prisma.user.findUnique({ where: { email: user.email! } });
+          const byEmail = user.email ? await prisma.user.findUnique({ where: { email: user.email } }).catch(() => null) : null;
           if (byEmail) {
             // Actualizar el ID para que coincida con Supabase
             await prisma.user.update({ where: { email: user.email! }, data: { id: user.id } }).catch(() => {});
@@ -51,12 +51,18 @@ export async function requireAuth(
             });
           }
         }
-      } catch (e) {
-        console.error('Error upserting user in DB:', e);
+      } catch (dbErr) {
+        console.error('[Auth] Error upserting user in DB:', dbErr);
+        // Don't fail auth just because DB write failed — user still authenticated
       }
       return user.id;
     }
-  } catch {}
+    if (error) {
+      console.error('[Auth] Supabase getUser error:', error.message);
+    }
+  } catch (supabaseErr) {
+    console.error('[Auth] Supabase auth check failed:', supabaseErr);
+  }
 
   // 2. Fallback: JWT personalizado firmado con JWT_SECRET
   const jwtSecret = process.env.JWT_SECRET;

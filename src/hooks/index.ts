@@ -9,40 +9,47 @@ function getAuthToken(): string {
 }
 
 // Fetch Hook — incluye Authorization header automáticamente
-export function useFetch<T>(url: string, options?: RequestInit) {
+export function useFetch<T>(url: string, options?: RequestInit, fetchOnMount: boolean = true) {
   const [data, setData] = useState<T | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        setLoading(true);
-        const token = getAuthToken();
-        const response = await fetch(url, {
-          ...options,
-          headers: {
-            'Content-Type': 'application/json',
-            ...(token ? { Authorization: `Bearer ${token}` } : {}),
-            ...(options?.headers || {}),
-          },
-        });
-        if (!response.ok) throw new Error(`Error ${response.status}`);
-        const json = await response.json();
-        setData(json.data || json);
-        setError(null);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'Error');
-        setData(null);
-      } finally {
-        setLoading(false);
+  const fetchData = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const token = getAuthToken();
+      const response = await fetch(url, {
+        ...options,
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          ...(options?.headers || {}),
+        },
+      });
+      const json = await response.json();
+      if (!response.ok) {
+        // Extract error message from response body
+        const msg = json.error || json.message || `Error ${response.status}`;
+        throw new Error(msg);
       }
-    };
+      setData(json.data || json);
+      setError(null);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Error');
+      setData(null);
+    } finally {
+      setLoading(false);
+    }
+  }, [url]); // eslint-disable-line react-hooks/exhaustive-deps
 
-    fetchData();
-  }, [url]);
+  useEffect(() => {
+    if (fetchOnMount) {
+      fetchData();
+    }
+  }, [fetchData, fetchOnMount]);
 
-  return { data, loading, error };
+  return { data, loading, error, refetch: fetchData };
 }
 
 // Mutation Hook
