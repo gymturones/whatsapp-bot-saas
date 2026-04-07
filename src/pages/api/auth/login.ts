@@ -63,6 +63,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         name: data.user.user_metadata?.name,
       },
       access_token: data.session?.access_token,
+      refresh_token: data.session?.refresh_token,
     });
   } catch (error: any) {
     console.error("Login error:", error);

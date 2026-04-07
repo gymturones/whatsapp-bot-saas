@@ -5,6 +5,7 @@ import Head from 'next/head'
 import Link from 'next/link'
 import { useState } from 'react'
 import { useRouter } from 'next/router'
+import { getSupabaseBrowserClient } from '@/lib/supabase'
 
 const Login: NextPage = () => {
   const router = useRouter()
@@ -36,6 +37,18 @@ const Login: NextPage = () => {
       // Save token for API requests
       if (data.access_token) {
         localStorage.setItem('sb_access_token', data.access_token)
+
+        // Also set the session in the Supabase browser client
+        // so useAuth() can find it via getSession()
+        try {
+          const supabase = getSupabaseBrowserClient()
+          await supabase.auth.setSession({
+            access_token: data.access_token,
+            refresh_token: data.refresh_token || '',
+          })
+        } catch (e) {
+          console.warn('Could not set Supabase browser session:', e)
+        }
       }
       if (data.user?.email) {
         localStorage.setItem('user_email', data.user.email)

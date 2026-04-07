@@ -5,6 +5,7 @@ import Head from 'next/head'
 import Link from 'next/link'
 import { useState } from 'react'
 import { useRouter } from 'next/router'
+import { getSupabaseBrowserClient } from '@/lib/supabase'
 
 const Signup: NextPage = () => {
   const router = useRouter()
@@ -52,6 +53,18 @@ const Signup: NextPage = () => {
       if (data.session?.access_token) {
         localStorage.setItem('sb_access_token', data.session.access_token)
         localStorage.setItem('user_email', data.user?.email || email)
+
+        // Set session in Supabase browser client
+        try {
+          const supabase = getSupabaseBrowserClient()
+          await supabase.auth.setSession({
+            access_token: data.session.access_token,
+            refresh_token: data.session.refresh_token || '',
+          })
+        } catch (e) {
+          console.warn('Could not set Supabase browser session:', e)
+        }
+
         router.push('/dashboard/onboarding')
         return
       }
