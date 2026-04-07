@@ -8,7 +8,7 @@ export default function ConversationsPage() {
   const router = useRouter();
 
   // Fetch all user bots
-  const { data: botsData, loading: botsLoading } = useFetch('/api/bots/list?page=1&limit=50');
+  const { data: botsData, loading: botsLoading } = useFetch('/api/bots?page=1&limit=50');
 
   if (botsLoading) {
     return (

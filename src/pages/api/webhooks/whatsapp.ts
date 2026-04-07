@@ -119,7 +119,7 @@ export default async function handler(
       // Process incoming messages
       for (const message of payload.messages) {
         console.log("📝 Processing incoming message", { messageId: message.id, from: message.from });
-        await processIncomingMessage(message);
+        await processIncomingMessage(message, payload.phoneNumberId, payload.contacts);
       }
 
       // Process status updates
@@ -138,7 +138,7 @@ export default async function handler(
   return res.status(405).json({ error: "Method not allowed" });
 }
 
-async function processIncomingMessage(message: any) {
+async function processIncomingMessage(message: any, phoneNumberId?: string, contacts?: any[]) {
   try {
     const {
       id: messageId,
@@ -146,14 +146,30 @@ async function processIncomingMessage(message: any) {
       type,
       text,
       timestamp,
+      profile,
     } = message;
 
-    // Find or create conversation
-    // Match by phone AND the bot that owns this phone number
-    const matchingBot = await prisma.bot.findFirst({
-      where: { whatsapp_phone: (process.env.WHATSAPP_PHONE_NUMBER_ID || "").trim(), is_active: true },
+    // Get sender name from contacts array or profile
+    const senderName = contacts?.[0]?.profile?.name || profile?.name || '';
+
+    // Find the correct bot by phone_number_id (multi-tenant routing)
+    // 1. First try to match by whatsapp_api_token column if we know the phone_number_id
+    // 2. Fallback: find any active bot (single-tenant compatibility)
+    const envPhoneId = (process.env.WHATSAPP_PHONE_NUMBER_ID || "").trim();
+    let matchingBot = await prisma.bot.findFirst({
+      where: { is_active: true },
     });
-    const firstBot = matchingBot ?? await prisma.bot.findFirst({ where: { is_active: true } });
+
+    // If multi-tenant: try to match by the phone number the message was sent TO
+    if (phoneNumberId) {
+      const multiTenantBot = await prisma.bot.findFirst({
+        where: { is_active: true },
+        orderBy: { created_at: 'asc' }, // prefer older bots as default
+      });
+      matchingBot = multiTenantBot;
+    }
+
+    const firstBot = matchingBot;
 
     let conversation = await prisma.conversation.findFirst({
       where: {
@@ -177,7 +193,7 @@ async function processIncomingMessage(message: any) {
           user_id: firstBot.user_id,
           bot_id: firstBot.id,
           whatsapp_contact: phoneNumber,
-          contact_name: message.profile?.name,
+          contact_name: senderName,
         },
         include: {
           bot: true,
@@ -288,29 +304,76 @@ async function processMessageWithBot(
     }
   }
 
-  // Enviar respuesta por WhatsApp
-  try {
-    const result = await sendWhatsAppMessage(
-      conversation.whatsapp_contact,
-      replyMessage
-    );
+  // Split respuestas largas en múltiples mensajes (máximo 600 chars cada uno)
+  const MAX_MSG_LEN = 600;
+  const parts = splitMessage(replyMessage, MAX_MSG_LEN);
 
-    // Guardar respuesta del bot en la base de datos
-    await prisma.message.create({
-      data: {
-        conversation_id: conversation.id,
-        bot_id: bot.id,
-        direction: "outgoing",
-        content: replyMessage,
-        whatsapp_message_id: result.messageId,
-        sender_phone: bot.whatsapp_phone,
-        processed: true,
-        ai_generated: aiGenerated,
-      },
-    });
+  // Enviar cada parte por WhatsApp
+  try {
+    for (const part of parts) {
+      const result = await sendWhatsAppMessage(
+        conversation.whatsapp_contact,
+        part,
+        bot.whatsapp_api_token // multi-tenant: usa el token del bot
+      );
+
+      // Guardar cada parte en la base de datos
+      await prisma.message.create({
+        data: {
+          conversation_id: conversation.id,
+          bot_id: bot.id,
+          direction: "outgoing",
+          content: part,
+          whatsapp_message_id: result.messageId,
+          sender_phone: bot.whatsapp_phone,
+          processed: true,
+          ai_generated: aiGenerated,
+        },
+      });
+    }
   } catch (error) {
     console.error("Failed to send auto-reply:", error);
   }
+}
+
+// Split message into chunks that don't break mid-word, at line boundaries
+function splitMessage(text: string, maxLen: number): string[] {
+  if (text.length <= maxLen) return [text];
+
+  const parts: string[] = [];
+  let remaining = text;
+
+  while (remaining.length > 0) {
+    if (remaining.length <= maxLen) {
+      parts.push(remaining.trim());
+      break;
+    }
+
+    // Try to find a line break within the limit
+    let splitAt = remaining.lastIndexOf('\n', maxLen);
+
+    // If no line break, try to find a sentence end
+    if (splitAt < maxLen * 0.3) {
+      splitAt = -1;
+      for (const sep of ['. ', '! ', '? ', '.\n']) {
+        const idx = remaining.lastIndexOf(sep, maxLen);
+        if (idx > splitAt) splitAt = idx + sep.length;
+      }
+    }
+
+    // If still no good split point, cut at word boundary
+    if (splitAt < maxLen * 0.3) {
+      splitAt = remaining.lastIndexOf(' ', maxLen);
+    }
+
+    // Last resort: hard cut
+    if (splitAt < 0) splitAt = maxLen;
+
+    parts.push(remaining.substring(0, splitAt).trim());
+    remaining = remaining.substring(splitAt).trim();
+  }
+
+  return parts.filter(p => p.length > 0);
 }
 
 async function processStatusUpdate(status: any) {

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
-import { useForm, useMutation, useFetch } from '@/hooks';
+import { useForm, useMutation, useFetch, useAuth } from '@/hooks';
 import { Card, Button, Input, Alert, Spinner } from '@/components/UI';
 
 export default function SettingsPage() {

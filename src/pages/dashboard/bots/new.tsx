@@ -13,7 +13,7 @@ export default function BotFormPage() {
   const { data: bot } = useFetch(isEdit ? `/api/bots/${botId}` : null);
 
   const { mutate, loading, error } = useMutation(
-    isEdit ? `/api/bots/${botId}` : '/api/bots',
+    isEdit && botId ? `/api/bots/${botId}` : '/api/bots',
     {
       method: isEdit ? 'PUT' : 'POST',
       onSuccess: () => {

@@ -62,7 +62,16 @@ export async function generateAIResponse(options: AIResponseOptions): Promise<st
     : '';
 
   // System prompt: instrucciones del dueño + conocimiento base
-  const fullSystemPrompt = (systemPrompt || 'Sos un asistente virtual de WhatsApp para un negocio. Respondé de forma amable, concisa y en español. Si no sabés algo, decilo honestamente.') + knowledgeBase;
+  const fullSystemPrompt = `Sos un asistente virtual de WhatsApp para un negocio. REGLAS ESTRICTAS:
+- Respondé SIEMPRE en español argentino
+- Sé BREVE: máximo 3 líneas por mensaje, máximo 160 caracteres por línea
+- Usá viñetas con • para listas (una por línea)
+- Dejá una línea en blanco entre secciones
+- NUNCA uses bloques de texto largos
+- Si la info es extensa, resumila en puntos clave
+- Si no sabés algo, decilo honestamente en una línea
+- NO uses formato markdown (ni ** ni ## ni ###)
+${systemPrompt || ''}${knowledgeBase}`;
 
   const messages: ChatMessage[] = [
     { role: 'system', content: fullSystemPrompt },
@@ -81,7 +90,7 @@ export async function generateAIResponse(options: AIResponseOptions): Promise<st
       model,
       messages,
       temperature,
-      max_tokens: 500,
+      max_tokens: 300,
     }),
   });
 

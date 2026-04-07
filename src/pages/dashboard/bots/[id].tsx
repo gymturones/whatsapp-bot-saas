@@ -68,13 +68,13 @@ export default function BotDetailPage() {
         if (modalMode === 'create') {
           await fetch('/api/bot-responses', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${localStorage.getItem('token')}` },
+            headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${localStorage.getItem('sb_access_token')}` },
             body: JSON.stringify({ bot_id: botId, ...values }),
           });
         } else if (modalMode === 'edit' && editingResponse) {
           await fetch(`/api/bot-responses?id=${editingResponse.id}`, {
             method: 'PUT',
-            headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${localStorage.getItem('token')}` },
+            headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${localStorage.getItem('sb_access_token')}` },
             body: JSON.stringify(values),
           });
         }
@@ -93,7 +93,7 @@ export default function BotDetailPage() {
     try {
       await fetch(`/api/bot-responses?id=${responseId}`, {
         method: 'DELETE',
-        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
+        headers: { Authorization: `Bearer ${localStorage.getItem('sb_access_token')}` },
       });
       setDeleteResponseId(null);
       triggerRefresh();

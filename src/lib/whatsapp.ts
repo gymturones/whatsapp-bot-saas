@@ -39,11 +39,13 @@ interface WhatsAppStatus {
   timestamp: string;
 }
 
-// Send text message
+// Send text message — accepts optional botToken for multi-tenant
 export async function sendWhatsAppMessage(
   recipientPhone: string,
-  message: string
+  message: string,
+  botToken?: string
 ) {
+  const token = (botToken || WHATSAPP_ACCESS_TOKEN || "").trim();
   try {
     const response = await axios.post(
       `${WHATSAPP_API_URL}/${WHATSAPP_PHONE_NUMBER_ID}/messages`,
@@ -57,7 +59,7 @@ export async function sendWhatsAppMessage(
       },
       {
         headers: {
-          Authorization: `Bearer ${WHATSAPP_ACCESS_TOKEN}`,
+          Authorization: `Bearer ${token}`,
         },
       }
     );
@@ -256,6 +258,8 @@ export function parseWebhookPayload(body: any) {
       messages: value.messages || [],
       statuses: value.statuses || [],
       contacts: value.contacts || [],
+      phoneNumberId: value.metadata?.phone_number_id || '',
+      displayPhoneNumber: value.metadata?.display_phone_number || '',
     };
   } catch (error) {
     console.error("Webhook parse error:", error);
