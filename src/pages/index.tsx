@@ -133,10 +133,8 @@ const Home: NextPage = () => {
                 {/* Headline */}
                 <div className="mb-8">
                   <p className="text-2xl font-black text-slate-400 tracking-tight mb-2">AUTOMATIZÁ TU</p>
-                  <h1 className="text-6xl md:text-7xl lg:text-8xl font-black leading-none tracking-tight mb-4">
-                    <span className="bg-gradient-to-r from-green-400 via-green-500 to-emerald-400 bg-clip-text text-transparent">
-                      WHATSAPP
-                    </span>
+                  <h1 className="text-6xl md:text-7xl lg:text-8xl font-black leading-none tracking-normal mb-4 text-green-400">
+                    WHATSAPP
                   </h1>
                   <p className="text-3xl md:text-4xl font-black text-white tracking-tight whitespace-nowrap">
                     con Inteligencia Artificial
