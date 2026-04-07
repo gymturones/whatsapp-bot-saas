@@ -10,23 +10,37 @@ export async function withAdmin(
   handler: (req: NextApiRequest, res: NextApiResponse, userId?: string) => Promise<void> | void,
 ) {
   return async (req: NextApiRequest, res: NextApiResponse) => {
+    // Step 1: Auth check
+    let userId: string | null = null
     try {
-      const userId = await requireAuth(req, res)
-      if (!userId) return // requireAuth already sent response
+      userId = await requireAuth(req, res)
+    } catch (err) {
+      console.error('[Admin] Auth failed:', err)
+      return res.status(401).json({ error: 'Error de autenticación' })
+    }
+    if (!userId) return
 
-      const user = await prisma.user.findUnique({ where: { id: userId } })
-      if (!user) {
-        console.error('[Admin] User not found in Prisma for id:', userId)
-        return res.status(401).json({ error: 'Usuario no encontrado en la base de datos. Intentá cerrar sesión y volver a entrar.' })
-      }
-      if (!ADMIN_EMAILS.includes(user.email.toLowerCase())) {
-        console.warn('[Admin] Access denied for:', user.email, '| Allowed:', ADMIN_EMAILS)
-        return res.status(403).json({ error: 'Acceso denegado. Email no autorizado como admin.' })
-      }
+    // Step 2: Admin check via Prisma
+    let user
+    try {
+      user = await prisma.user.findUnique({ where: { id: userId } })
+    } catch (dbErr) {
+      console.error('[Admin] DB error:', dbErr)
+      return res.status(500).json({ error: 'Error de conexión a la base de datos' })
+    }
 
-      return handler(req, res, userId)
+    if (!user) {
+      return res.status(401).json({ error: 'Usuario no encontrado. Cerrá sesión y volvé a entrar.' })
+    }
+    if (!ADMIN_EMAILS.includes(user.email.toLowerCase())) {
+      return res.status(403).json({ error: 'Acceso denegado' })
+    }
+
+    // Step 3: Run handler
+    try {
+      return await handler(req, res, userId)
     } catch (error) {
-      console.error('[Admin] Middleware error:', error)
+      console.error('[Admin] Handler error:', error)
       res.status(500).json({ error: 'Error interno del servidor' })
     }
   }
